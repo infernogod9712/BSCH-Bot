@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bot Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      margin-top: 8px;
+      color: #8b949e;
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 28px;
+    }
+
+    .card-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8b949e;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #30363d;
+    }
+
+    /* Application buttons */
+    .app-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .app-buttons p {
+      font-size: 0.85rem;
+      color: #8b949e;
+      margin-bottom: 4px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); opacity: 1; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .btn-open    { background: #238636; color: #fff; }
+    .btn-close   { background: #da3633; color: #fff; }
+    .btn-results { background: #1f6feb; color: #fff; }
+
+    /* Starboard settings */
+    .setting {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid #21262d;
+    }
+
+    .setting:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .setting-label { font-size: 0.9rem; color: #e6edf3; }
+    .setting-sub   { font-size: 0.78rem; color: #8b949e; margin-top: 2px; }
+
+    /* Number input */
+    .threshold-input {
+      width: 68px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 6px 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .threshold-input:focus { border-color: #1f6feb; }
+
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #30363d;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle input:checked + .toggle-track { background: #1f6feb; }
+
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-track::after { transform: translateX(20px); }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: #238636;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    #toast.error { background: #da3633; }
+    #toast.show  { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Bot Dashboard</h1>
+    <p>Manage your Discord bot without touching Discord.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- Application Card -->
+    <div class="card">
+      <div class="card-title">Application</div>
+      <div class="app-buttons">
+        <p>Send a message to the applications channel.</p>
+        <button class="btn btn-open"    onclick="sendAction('open')">🟢 Open Applications</button>
+        <button class="btn btn-close"   onclick="sendAction('close')">🔴 Close Applications</button>
+        <button class="btn btn-results" onclick="sendAction('results')">📋 Send Results Notice</button>
+      </div>
+    </div>
+
+    <!-- Starboard Card -->
+    <div class="card">
+      <div class="card-title">Starboard</div>
+
+      <div class="setting">
+        <div>
+          <div class="setting-label">Star Threshold</div>
+          <div class="setting-sub">Stars needed to get featured</div>
+        </div>
+        <input
+          id="threshold"
+          class="threshold-input"
+          type="number"
+          min="1"
+          max="99"
+          value="2"
+          onchange="saveSetting('threshold', this.value)"
+        />
+      </div>
+
+      <div class="setting">
+        <div>
+          <div class="setting-label">Count Bot Star</div>
+          <div class="setting-sub">Include the bot's own ⭐ reaction</div>
+        </div>
+        <label class="toggle">
+          <input id="countBotStar" type="checkbox" onchange="saveSetting('countBotStar', this.checked)" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="setting">
+        <div>
+          <div class="setting-label">Count Self Star</div>
+          <div class="setting-sub">Allow users to star their own posts</div>
+        </div>
+        <label class="toggle">
+          <input id="countSelfStar" type="checkbox" onchange="saveSetting('countSelfStar', this.checked)" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    // Load current settings from the bot on page load
+    async function loadConfig() {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      document.getElementById('threshold').value    = data.threshold;
+      document.getElementById('countBotStar').checked  = data.countBotStar;
+      document.getElementById('countSelfStar').checked = data.countSelfStar;
+    }
+
+    // Save a single starboard setting
+    async function saveSetting(key, value) {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: key === 'threshold' ? Number(value) : value }),
+      });
+      if (res.ok) showToast('Saved!');
+      else showToast('Error saving', true);
+    }
+
+    // Trigger an application action
+    async function sendAction(action) {
+      const buttons = document.querySelectorAll('.btn');
+      buttons.forEach(b => b.disabled = true);
+
+      const res = await fetch('/api/application', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+
+      buttons.forEach(b => b.disabled = false);
+
+      const label = action.charAt(0).toUpperCase() + action.slice(1);
+      if (res.ok) showToast(`${label} message sent to Discord!`);
+      else showToast(`Failed to send ${label} message`, true);
+    }
+
+    // Toast notification
+    let toastTimer;
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = isError ? 'error show' : 'show';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.className = t.className.replace('show', '').trim(), 2500);
+    }
+
+    loadConfig();
+  </script>
+</body>
+</html>
