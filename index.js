@@ -245,6 +245,13 @@ const TICKET_CATEGORIES = [
   },
 ];
 
+function parseDuration(str) {
+  const match = str.match(/^(\d+)(s|m|h|d|w)$/i);
+  if (!match) return null;
+  const multipliers = { s: 1000, m: 60000, h: 3600000, d: 86400000, w: 604800000 };
+  return parseInt(match[1]) * multipliers[match[2].toLowerCase()];
+}
+
 async function sendTicketLog(action, user, detail, color = 0x5865F2) {
   try {
     const ch  = await client.channels.fetch(TICKET_LOG_CHANNEL);
@@ -354,6 +361,36 @@ client.once('clientReady', () => {
     console.log('Apps are open — resuming daily reminder.');
     startReminder();
   }
+
+  // Auto-close inactive tickets every hour
+  setInterval(async () => {
+    const THREE_DAYS = 3 * 24 * 60 * 60 * 1000;
+    for (const [channelId, data] of ticketData) {
+      if (data.status !== 'open') continue;
+      if (!data.lastActivity || Date.now() - data.lastActivity < THREE_DAYS) continue;
+      try {
+        const channel = await client.channels.fetch(channelId);
+        data.status = 'closed';
+        await channel.permissionOverwrites.edit(data.userId, { SendMessages: false }).catch(() => {});
+
+        const controlsRow = new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('ticket_transcript').setLabel('Transcript').setEmoji('📋').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('ticket_reopen').setLabel('Open').setEmoji('🔓').setStyle(ButtonStyle.Secondary),
+          new ButtonBuilder().setCustomId('ticket_delete').setLabel('Delete').setEmoji('⛔').setStyle(ButtonStyle.Danger),
+        );
+
+        await channel.send({
+          content: 'This ticket is being auto-closed for inactivity.',
+          embeds: [new EmbedBuilder().setDescription('**Support team ticket controls**').setColor(0x2b2d31)],
+          components: [controlsRow],
+        });
+
+        await sendTicketLog('🕐 Ticket Auto-Closed', client.user, `Channel: <#${channelId}>\nReason: 3 days inactivity`, 0xFFA500);
+      } catch {
+        ticketData.delete(channelId);
+      }
+    }
+  }, 60 * 60 * 1000);
 });
 
 // ---------------------------------------------------------------
@@ -522,7 +559,7 @@ client.on('interactionCreate', async (interaction) => {
         ],
       });
 
-      ticketData.set(channel.id, { userId: user.id, categoryKey: cat.id, status: 'open' });
+      ticketData.set(channel.id, { userId: user.id, categoryKey: cat.id, status: 'open', lastActivity: Date.now() });
 
       const welcomeEmbed = new EmbedBuilder()
         .setDescription(cat.welcome)
@@ -816,6 +853,108 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
 
+  // /giveaway
+  if (interaction.isChatInputCommand() && interaction.commandName === 'giveaway') {
+    const prize       = interaction.options.getString('prize');
+    const durationStr = interaction.options.getString('duration');
+    const winnerCount = interaction.options.getInteger('winners') ?? 1;
+    const duration    = parseDuration(durationStr);
+
+    if (!duration) {
+      await interaction.reply({ content: 'Invalid duration. Use formats like `30m`, `2h`, `1d`.', ephemeral: true });
+      return;
+    }
+
+    const endsAt = Math.floor((Date.now() + duration) / 1000);
+    const giveawayEmbed = new EmbedBuilder()
+      .setTitle('🎉 GIVEAWAY 🎉')
+      .setDescription(`**Prize:** ${prize}\n**Winners:** ${winnerCount}\n**Ends:** <t:${endsAt}:R>\n\nReact with 🎉 to enter!`)
+      .setColor(0xFF73FA)
+      .setFooter({ text: `Hosted by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })
+      .setTimestamp(Date.now() + duration);
+
+    await interaction.reply({ content: 'Giveaway started!', ephemeral: true });
+    const msg = await interaction.channel.send({ embeds: [giveawayEmbed] });
+    await msg.react('🎉');
+
+    setTimeout(async () => {
+      try {
+        const fetched  = await msg.fetch();
+        const reaction = fetched.reactions.cache.get('🎉');
+        const users    = await reaction.users.fetch();
+        const eligible = users.filter(u => !u.bot);
+
+        if (!eligible.size) {
+          await interaction.channel.send({ embeds: [new EmbedBuilder().setTitle('🎉 Giveaway Ended').setDescription(`No valid entries for **${prize}**.`).setColor(0xFF73FA)] });
+          return;
+        }
+
+        const picked       = eligible.random(Math.min(winnerCount, eligible.size));
+        const winners      = Array.isArray(picked) ? picked : [picked];
+        const winnerPings  = winners.map(w => `<@${w.id}>`).join(', ');
+
+        await msg.edit({ embeds: [new EmbedBuilder()
+          .setTitle('🎉 Giveaway Ended!')
+          .setDescription(`**Prize:** ${prize}\n**Winner(s):** ${winnerPings}`)
+          .setColor(0xFF73FA)
+          .setFooter({ text: `Hosted by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) })] });
+
+        await interaction.channel.send(`🎉 Congratulations ${winnerPings}! You won **${prize}**!`);
+      } catch (e) { console.error('Giveaway end error:', e); }
+    }, duration);
+    return;
+  }
+
+  // /poll
+  if (interaction.isChatInputCommand() && interaction.commandName === 'poll') {
+    const question = interaction.options.getString('question');
+    const options  = [1, 2, 3, 4].map(n => interaction.options.getString(`option${n}`)).filter(Boolean);
+    const numEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣'];
+
+    const description = options.length
+      ? `${question}\n\n${options.map((o, i) => `${numEmojis[i]} ${o}`).join('\n')}`
+      : question;
+
+    const pollEmbed = new EmbedBuilder()
+      .setTitle('📊 Poll')
+      .setDescription(description)
+      .setColor(0x5865F2)
+      .setFooter({ text: `Poll by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) });
+
+    await interaction.reply({ content: 'Poll posted!', ephemeral: true });
+    const msg = await interaction.channel.send({ embeds: [pollEmbed] });
+
+    const emojis = options.length ? numEmojis.slice(0, options.length) : ['👍', '👎'];
+    for (const emoji of emojis) await msg.react(emoji);
+    return;
+  }
+
+  // /adduser
+  if (interaction.isChatInputCommand() && interaction.commandName === 'adduser') {
+    if (!ticketData.has(interaction.channelId)) {
+      await interaction.reply({ content: 'This command can only be used inside a ticket channel.', ephemeral: true });
+      return;
+    }
+    const target = interaction.options.getUser('user');
+    await interaction.channel.permissionOverwrites.edit(target.id, {
+      ViewChannel: true, SendMessages: true, ReadMessageHistory: true,
+    });
+    await interaction.reply({ content: `Added <@${target.id}> to the ticket.`, ephemeral: true });
+    return;
+  }
+
+  // /removeuser
+  if (interaction.isChatInputCommand() && interaction.commandName === 'removeuser') {
+    if (!ticketData.has(interaction.channelId)) {
+      await interaction.reply({ content: 'This command can only be used inside a ticket channel.', ephemeral: true });
+      return;
+    }
+    const target = interaction.options.getUser('user');
+    await interaction.channel.permissionOverwrites.delete(target.id);
+    await interaction.reply({ content: `Removed <@${target.id}> from the ticket.`, ephemeral: true });
+    return;
+  }
+
   // /promote and /demote
   if (interaction.isChatInputCommand() && (interaction.commandName === 'promote' || interaction.commandName === 'demote')) {
     const isPromote = interaction.commandName === 'promote';
@@ -919,6 +1058,9 @@ client.on('interactionCreate', async (interaction) => {
 // Starboard — auto-react with ⭐ when an image is posted
 // ---------------------------------------------------------------
 client.on('messageCreate', async (message) => {
+  if (ticketData.has(message.channelId) && !message.author.bot) {
+    ticketData.get(message.channelId).lastActivity = Date.now();
+  }
   if (message.channelId !== config.starboard.sourceChannelId) return;
   if (message.author.bot) return;
   const hasImage = message.attachments.some(att => att.contentType?.startsWith('image/'));

@@ -98,6 +98,36 @@ const commands = [
     .toJSON(),
 
   new SlashCommandBuilder()
+    .setName('giveaway')
+    .setDescription('Start a giveaway')
+    .addStringOption(opt => opt.setName('prize').setDescription('What are you giving away?').setRequired(true))
+    .addStringOption(opt => opt.setName('duration').setDescription('Duration e.g. 30m, 2h, 1d').setRequired(true))
+    .addIntegerOption(opt => opt.setName('winners').setDescription('Number of winners (default 1)').setRequired(false).setMinValue(1).setMaxValue(10))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('poll')
+    .setDescription('Create a poll')
+    .addStringOption(opt => opt.setName('question').setDescription('The poll question').setRequired(true))
+    .addStringOption(opt => opt.setName('option1').setDescription('Option 1').setRequired(false))
+    .addStringOption(opt => opt.setName('option2').setDescription('Option 2').setRequired(false))
+    .addStringOption(opt => opt.setName('option3').setDescription('Option 3').setRequired(false))
+    .addStringOption(opt => opt.setName('option4').setDescription('Option 4').setRequired(false))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('adduser')
+    .setDescription('Add a user to this ticket')
+    .addUserOption(opt => opt.setName('user').setDescription('User to add').setRequired(true))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('removeuser')
+    .setDescription('Remove a user from this ticket')
+    .addUserOption(opt => opt.setName('user').setDescription('User to remove').setRequired(true))
+    .toJSON(),
+
+  new SlashCommandBuilder()
     .setName('send')
     .setDescription('Send a message to a channel')
     .addStringOption(opt =>
