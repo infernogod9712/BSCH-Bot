@@ -34,6 +34,21 @@ const commands = [
     .toJSON(),
 
   new SlashCommandBuilder()
+    .setName('ping')
+    .setDescription('Check the bot is online and see its latency')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('remind')
+    .setDescription('Manually send the application reminder message to the applications channel')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('appstatus')
+    .setDescription('Check whether applications are currently open or closed')
+    .toJSON(),
+
+  new SlashCommandBuilder()
     .setName('result')
     .setDescription('Send an application result to a user and the applications channel')
     .addUserOption(opt =>
@@ -43,6 +58,90 @@ const commands = [
         .addChoices({ name: 'Pass', value: 'pass' }, { name: 'Fail', value: 'fail' }))
     .addStringOption(opt =>
       opt.setName('reason').setDescription('Reason for the decision').setRequired(true))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('meme')
+    .setDescription('Posts a random meme')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('serverinfo')
+    .setDescription('Get server info and stats')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('membercount')
+    .setDescription('Get the server member count')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('roles')
+    .setDescription('Get a list of server roles')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('avatar')
+    .setDescription("Get a user's avatar")
+    .addUserOption(opt =>
+      opt.setName('user').setDescription('User to get avatar for (defaults to you)').setRequired(false))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('info')
+    .setDescription('Get bot info')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('ticketpanel')
+    .setDescription('Post the ticket open panel in this channel')
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('send')
+    .setDescription('Send a message to a channel')
+    .addStringOption(opt =>
+      opt.setName('message').setDescription('The message to send').setRequired(true))
+    .addChannelOption(opt =>
+      opt.setName('channel').setDescription('Channel to send to (defaults to this channel)').setRequired(false))
+    .addAttachmentOption(opt =>
+      opt.setName('attachment').setDescription('Optional file or image to attach').setRequired(false))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('promote')
+    .setDescription('Promote a user to a staff role')
+    .addUserOption(opt =>
+      opt.setName('user').setDescription('The user to promote').setRequired(true))
+    .addStringOption(opt =>
+      opt.setName('role').setDescription('Role to promote them to').setRequired(true)
+        .addChoices(
+          { name: 'Moderator',  value: '1498134471352778793' },
+          { name: 'Senior Mod', value: '1498946366326575176' },
+          { name: 'Head Mod',   value: '1498946523768033310' },
+          { name: 'Admin',      value: '1498134004489130105' },
+          { name: 'Co Owner',   value: '1498419215483277462' },
+        ))
+    .addStringOption(opt =>
+      opt.setName('reason').setDescription('Reason for the promotion').setRequired(true))
+    .toJSON(),
+
+  new SlashCommandBuilder()
+    .setName('demote')
+    .setDescription('Demote a user from a staff role')
+    .addUserOption(opt =>
+      opt.setName('user').setDescription('The user to demote').setRequired(true))
+    .addStringOption(opt =>
+      opt.setName('role').setDescription('Role to demote them to').setRequired(true)
+        .addChoices(
+          { name: 'Moderator',  value: '1498134471352778793' },
+          { name: 'Senior Mod', value: '1498946366326575176' },
+          { name: 'Head Mod',   value: '1498946523768033310' },
+          { name: 'Admin',      value: '1498134004489130105' },
+          { name: 'Co Owner',   value: '1498419215483277462' },
+        ))
+    .addStringOption(opt =>
+      opt.setName('reason').setDescription('Reason for the demotion').setRequired(true))
     .toJSON(),
 ];
 

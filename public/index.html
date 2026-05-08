@@ -192,10 +192,13 @@
     <div class="card">
       <div class="card-title">Application</div>
       <div class="app-buttons">
-        <p>Send a message to the applications channel.</p>
+        <div id="appStatusBadge" style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:0.8rem;font-weight:700;margin-bottom:12px;">
+          Checking...
+        </div>
         <button class="btn btn-open"    onclick="sendAction('open')">🟢 Open Applications</button>
         <button class="btn btn-close"   onclick="sendAction('close')">🔴 Close Applications</button>
         <button class="btn btn-results" onclick="sendAction('results')">📋 Send Results Notice</button>
+        <button class="btn btn-results" onclick="sendAction('remind')" style="background:#6e40c9;">⏰ Send Reminder</button>
       </div>
     </div>
 
@@ -251,9 +254,20 @@
     async function loadConfig() {
       const res = await fetch('/api/config');
       const data = await res.json();
-      document.getElementById('threshold').value    = data.threshold;
+      document.getElementById('threshold').value       = data.threshold;
       document.getElementById('countBotStar').checked  = data.countBotStar;
       document.getElementById('countSelfStar').checked = data.countSelfStar;
+
+      const badge = document.getElementById('appStatusBadge');
+      if (data.appsOpen) {
+        badge.textContent = '🟢 Open';
+        badge.style.background = '#1a3a1a';
+        badge.style.color = '#57F287';
+      } else {
+        badge.textContent = '🔴 Closed';
+        badge.style.background = '#3a1a1a';
+        badge.style.color = '#ED4245';
+      }
     }
 
     // Save a single starboard setting
