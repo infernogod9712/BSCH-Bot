@@ -1,0 +1,12 @@
+{
+  "name": "bsch-bot",
+  "version": "1.0.0",
+  "description": "BSCH Discord bot - fresh build",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.16.3"
+  }
+}
