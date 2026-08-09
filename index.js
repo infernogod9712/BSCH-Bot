@@ -3,7 +3,7 @@
 //
 // The bot token is read from an environment variable called DISCORD_TOKEN
 // so it never gets saved inside the code (safe for a shared GitHub repo).
-
+// test 2
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const client = new Client({
