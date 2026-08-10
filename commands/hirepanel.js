@@ -11,7 +11,7 @@ module.exports = {
 
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId("ticket_hire")
+                .setCustomId("hire_open")
                 .setLabel("🎫 Hire Us!")
                 .setStyle(ButtonStyle.Primary),
         );

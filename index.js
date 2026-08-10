@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
 const supportHandler = require('./handlers/supporthandler');
+const hiringHandler = require('./handlers/hiringhandler');
 
 // ---- Create the bot ----
 const client = new Client({
@@ -42,9 +43,13 @@ client.on('interactionCreate', async (interaction) => {
       if (!command) return;
       await command.execute(interaction, client, config);
 
-    // Button click or modal submit → hand it to the support handler
+    // Button click or modal submit → route to the right handler by customId
     } else if (interaction.isButton() || interaction.isModalSubmit()) {
-      await supportHandler.handle(interaction, client, config);
+      if (interaction.customId.startsWith('hire')) {
+        await hiringHandler.handle(interaction, client, config);
+      } else {
+        await supportHandler.handle(interaction, client, config);
+      }
     }
   } catch (error) {
     console.error(error);
