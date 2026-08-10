@@ -83,6 +83,21 @@ function getOpenCaseByClient(clientId) {
     .find(c => c.clientId === clientId && c.status !== 'closed') || null;
 }
 
+// Every case a client has ever had (open or closed), newest first. Used by
+// !buildlogs @client for a full history lookup.
+function getAllCasesByClient(clientId) {
+  const data = readData();
+  return Object.values(data.cases)
+    .filter(c => c.clientId === clientId)
+    .sort((a, b) => b.ticketId - a.ticketId);
+}
+
+// Every case in the store (used by the timer sweep).
+function getAllCases() {
+  const data = readData();
+  return Object.values(data.cases);
+}
+
 module.exports = {
   readData,
   writeData,
@@ -91,4 +106,6 @@ module.exports = {
   updateCase,
   getClosedCasesByClient,
   getOpenCaseByClient,
+  getAllCasesByClient,
+  getAllCases,
 };

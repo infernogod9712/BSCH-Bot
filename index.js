@@ -9,6 +9,7 @@ const path = require('path');
 const config = require('./config.json');
 const supportHandler = require('./handlers/supporthandler');
 const hiringHandler = require('./handlers/hiringhandler');
+const store = require('./hire/store');
 
 // ---- Create the bot ----
 const client = new Client({
@@ -63,9 +64,119 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
+// ---- Plain messages: client-activity tracking + !buildlogs ----
+client.on('messageCreate', async (message) => {
+  if (message.author.bot || !message.guild) return;
+
+  // Track the client's activity in their hire ticket (for inactivity pings)
+  const record = store.getCaseByChannel(message.channel.id);
+  if (record && message.author.id === record.clientId) {
+    store.updateCase(record.ticketId, {
+      lastClientMessageAt: new Date().toISOString(),
+      inactivityPinged: false,
+    });
+  }
+
+  // !buildlogs @client  — pull a client's full case history (staff only)
+  if (message.content.trim().toLowerCase().startsWith('!buildlogs')) {
+    const isStaff = (config.staffRoles || []).some(id => message.member.roles.cache.has(id));
+    if (!isStaff) return message.reply('❌ Only staff can use `!buildlogs`.').catch(() => {});
+
+    const mentioned = message.mentions.users.first();
+    const parts = message.content.trim().split(/\s+/);
+    const clientId = mentioned ? mentioned.id : (parts[1] ? parts[1].replace(/\D/g, '') : null);
+    if (!clientId) return message.reply('Usage: `!buildlogs @client`').catch(() => {});
+
+    const cases = store.getAllCasesByClient(clientId);
+    if (!cases.length) return message.reply(`No hire cases found for <@${clientId}>.`).catch(() => {});
+
+    const lines = cases.map(c => {
+      const server = c.paperwork && c.paperwork.serverName ? ` — ${c.paperwork.serverName}` : '';
+      const rating = c.rating && !c.rating.declined ? ` — ⭐${c.rating.score}/10` : '';
+      return `**#${c.ticketId}** — ${c.status}${server}${rating}`;
+    });
+
+    await message.reply({
+      embeds: [{
+        title: `📚 Build history for this client`,
+        description: `<@${clientId}>\n\n${lines.join('\n')}`.slice(0, 4000),
+        color: 0x3498db,
+      }],
+    }).catch(() => {});
+  }
+});
+
+// ---- Timer sweep: claim 24h/48h + client inactivity (Section 1, Step 2) ----
+const HOUR_MS = 3600 * 1000;
+
+async function sweepCases() {
+  try {
+    const guild = client.guilds.cache.get(config.guildId);
+    if (!guild) return;
+    const now = Date.now();
+
+    for (const record of store.getAllCases()) {
+      if (record.status === 'closed' || !record.channelId) continue;
+
+      // Unclaimed claim timers
+      if (!record.lead && record.status === 'open') {
+        const age = now - new Date(record.createdAt).getTime();
+
+        // 48h total -> apologize to the client and close the case
+        if (age >= (config.timers.claimAutoCloseHours || 48) * HOUR_MS) {
+          const ch = await guild.channels.fetch(record.channelId).catch(() => null);
+          if (ch) {
+            await ch.send(
+              `<@${record.clientId}> We're really sorry — no builder was able to pick up your request in time. ` +
+              `Please open a new hire ticket later and we'll try again. 💛`
+            ).catch(() => {});
+          }
+          await hiringHandler.closeCaseChannel(guild, record, null, 'unclaimed-timeout', config);
+          continue;
+        }
+
+        // 24h -> ping all builders once
+        if (age >= (config.timers.claimPingHours || 24) * HOUR_MS && !record.claimPinged) {
+          const ch = await guild.channels.fetch(record.channelId).catch(() => null);
+          if (ch) {
+            const builderMention = config.roles.builder ? `<@&${config.roles.builder}>` : 'Builders';
+            await ch.send(
+              `${builderMention} — this case has been unclaimed for ${config.timers.claimPingHours || 24}h. Can someone claim it?`
+            ).catch(() => {});
+          }
+          store.updateCase(record.ticketId, { claimPinged: true });
+          continue;
+        }
+      }
+
+      // Client inactivity during an active build
+      if (record.status === 'build-started') {
+        const last = record.lastClientMessageAt
+          ? new Date(record.lastClientMessageAt).getTime()
+          : new Date(record.createdAt).getTime();
+        if (now - last >= (config.timers.clientInactivityHours || 24) * HOUR_MS && !record.inactivityPinged) {
+          const ch = await guild.channels.fetch(record.channelId).catch(() => null);
+          if (ch) {
+            await ch.send(
+              `<@${record.clientId}> just checking in — are you still available to continue your build? ` +
+              `Let us know so we can keep things moving. 🙂`
+            ).catch(() => {});
+          }
+          store.updateCase(record.ticketId, { inactivityPinged: true });
+        }
+      }
+    }
+  } catch (e) {
+    console.error('sweepCases error:', e);
+  }
+}
+
 // This runs once, when the bot successfully logs in
 client.once('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  // Check the timers every 15 minutes (first run shortly after startup)
+  setTimeout(sweepCases, 30 * 1000);
+  setInterval(sweepCases, 15 * 60 * 1000);
 });
 
 // ---- Start the bot ----
