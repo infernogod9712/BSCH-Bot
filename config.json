@@ -1,0 +1,69 @@
+{
+  "guildId": "1497625871370944614", 
+
+  "channels": {
+    "hireUs": "1506727116849414174",
+    "helpDesk": "1533230811153830008",
+    "hireCaseLogsForum": "1508245486564282610",
+    "applicationApprovalForum": "1534493118538321960",
+    "drillResultsChannel": "1534493417843982366",
+    "modLogsChannel": "1533504671199658036",
+    "staffAnnouncementsChannel": "",
+    "promotionsChannel": "1533390897549676674",
+    "infractionsChannel": "1533390992370171904",
+    "transcriptsChannel": "1536305824073383947"
+  },
+
+  "categories": {
+    "hireTickets": "1533129200360231072",
+    "supportTickets": "1533129316442046605",
+    "applications": "1536289430044807249",
+    "drills": "1536289372998074368"
+  },
+
+  "roles": {
+    "owner": "1498133594915209257",
+    "coOwner": "1498419215483277462",
+    "admin": "1498134004489130105",
+    "headStaff": "1498134740652527737",
+    "moderator": "1498134471352778793",
+    "builder": "1533410804383223988",
+    "staffTeam": "1533411357691482142",
+    "trainee": "1533454316663341096",
+    "member": "1498134947355951205",
+    "seniorStaffRoles": ["headStaff", "admin", "coOwner", "owner"]
+  },
+
+  "staffRoles": [
+    "1498133594915209257",
+    "1498419215483277462",
+    "1498134004489130105",
+    "1498134740652527737",
+    "1498134471352778793",
+    "1533410804383223988",
+    "1533411357691482142"
+  ],
+
+  "timers": {
+    "claimPingHours": 24,
+    "claimAutoCloseHours": 48,
+    "applicationDenyCooldownDays": 14,
+    "drillFailCooldownDays": 7,
+    "clientInactivityHours": 24
+  },
+
+  "links": {
+    "donationLink": ""
+  },
+
+  "contract": {
+    "currentText": "https://docs.google.com/document/d/1376hMCJH9OASygGRFE6FUDXH2T0djvRzy4wO-NkSMOI/edit?usp=sharing"
+  },
+
+  "ticketNaming": {
+    "hire": "hire-{client}-{ticketId}",
+    "support": "{type}-{client}",
+    "drill": "{team}-drill-{trainee}",
+    "application": "{team}-application-{trainee}"
+  }
+}
