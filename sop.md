@@ -304,6 +304,11 @@ A Head who picks up the request runs `/drillstart [department] [trainee] [client
 
 The scenario then plays out inside that ticket exactly as a real case or moderation situation would, with the named Client acting their part and Helpers assisting as needed, while the Head evaluates the Trainee's handling of it in real time.
 
+For builders, the trainee must build a server based on the fake client’s task, with a deadline of 5 days. The trainee will then run /drillsubmitbuild, and the head looks at the server and grades it. If the trainee does not respond in 5 days, the bot will automatically end the drill.
+
+For Moderators, the fake client will act as a rule breaker, and the trainee must act in real time what they would do. There are a total of 5 scenarios here, chosen by the head. 
+
+
 ### Ending the Drill
 
 When the scenario concludes, the Head runs `/drillend [result] [reason]`. Result is a strict **Pass** or **Fail**, there is no partial or "needs practice" state. The outcome and reason are posted to the **drill-results** channel for the record.

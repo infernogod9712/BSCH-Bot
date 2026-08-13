@@ -3,12 +3,14 @@
 //
 // The bot token is read from an environment variable called DISCORD_TOKEN
 // so it never gets saved inside the code (safe for a shared GitHub repo).
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
 const supportHandler = require('./handlers/supporthandler');
 const hiringHandler = require('./handlers/hiringhandler');
+const modmailHandler = require('./handlers/modmailhandler');
+const applicationHandler = require('./handlers/applicationhandler');
 const store = require('./hire/store');
 
 // ---- Create the bot ----
@@ -17,7 +19,10 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages, // Mod Mail: members DM the bot
   ],
+  // Partials.Channel is required to receive DM events for channels not cached.
+  partials: [Partials.Channel, Partials.Message],
 });
 
 // ---- Load every command from the commands/ folder ----
@@ -48,6 +53,10 @@ client.on('interactionCreate', async (interaction) => {
     } else if (interaction.isButton() || interaction.isModalSubmit()) {
       if (interaction.customId.startsWith('hire')) {
         await hiringHandler.handle(interaction, client, config);
+      } else if (interaction.customId.startsWith('modmail')) {
+        await modmailHandler.handle(interaction, client, config);
+      } else if (interaction.customId.startsWith('app')) {
+        await applicationHandler.handle(interaction, client, config);
       } else {
         await supportHandler.handle(interaction, client, config);
       }
@@ -64,9 +73,32 @@ client.on('interactionCreate', async (interaction) => {
   }
 });
 
-// ---- Plain messages: client-activity tracking + !buildlogs ----
+// ---- Plain messages: mod mail relay + applications + activity + !buildlogs ----
 client.on('messageCreate', async (message) => {
-  if (message.author.bot || !message.guild) return;
+  if (message.author.bot) return;
+
+  // ---- DMs -> Mod Mail relay (member side) ----
+  if (!message.guild) {
+    const relayed = await modmailHandler.relayUserDM(client, config, message).catch(() => false);
+    if (!relayed) await modmailHandler.showCategoryButtons(message.channel);
+    return;
+  }
+
+  // ---- Staff replies inside a mod mail thread -> DM the member ----
+  if (
+    typeof message.channel.isThread === 'function' &&
+    message.channel.isThread() &&
+    message.channel.parentId === config.channels.modmailChannel
+  ) {
+    await modmailHandler.relayStaffReply(client, config, message).catch(() => {});
+    return;
+  }
+
+  // ---- Application answers (applicant typing in their private app channel) ----
+  if (config.categories.applications && message.channel.parentId === config.categories.applications) {
+    const handled = await applicationHandler.handleAnswer(client, config, message).catch(() => false);
+    if (handled) return;
+  }
 
   // Track the client's activity in their hire ticket (for inactivity pings)
   const record = store.getCaseByChannel(message.channel.id);
