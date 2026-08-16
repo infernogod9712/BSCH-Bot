@@ -3,7 +3,7 @@
 //
 // The bot token is read from an environment variable called DISCORD_TOKEN
 // so it never gets saved inside the code (safe for a shared GitHub repo).
-const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Partials, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const config = require('./config.json');
@@ -98,6 +98,30 @@ client.on('messageCreate', async (message) => {
   if (config.categories.applications && message.channel.parentId === config.categories.applications) {
     const handled = await applicationHandler.handleAnswer(client, config, message).catch(() => false);
     if (handled) return;
+  }
+
+  // ---- b!sync : redeploy slash commands to this server (Senior Staff only) ----
+  // Handy when hosting on the Pi so you can sync from Discord instead of the
+  // terminal. Guild commands update instantly.
+  if (message.content.trim().toLowerCase() === 'b!sync') {
+    const seniorIds = [config.roles.owner, config.roles.coOwner, config.roles.admin, config.roles.headStaff].filter(Boolean);
+    const allowed = seniorIds.some(id => message.member.roles.cache.has(id));
+    if (!allowed) return message.reply('❌ Only Senior Staff can sync commands.').catch(() => {});
+
+    const status = await message.reply('🔄 Syncing commands to this server...').catch(() => null);
+    try {
+      const body = [...client.commands.values()].map(c => c.data.toJSON());
+      const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+      const clientId = process.env.CLIENT_ID || client.user.id;
+      await rest.put(Routes.applicationGuildCommands(clientId, message.guild.id), { body });
+      const msg = `✅ Synced ${body.length} commands to this server.`;
+      if (status) await status.edit(msg).catch(() => {}); else await message.reply(msg).catch(() => {});
+    } catch (e) {
+      console.error('b!sync failed:', e);
+      const msg = '❌ Sync failed — check the console for details.';
+      if (status) await status.edit(msg).catch(() => {}); else await message.reply(msg).catch(() => {});
+    }
+    return;
   }
 
   // Track the client's activity in their hire ticket (for inactivity pings)
