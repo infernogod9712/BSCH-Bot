@@ -12,6 +12,7 @@ const hiringHandler = require('./handlers/hiringhandler');
 const modmailHandler = require('./handlers/modmailhandler');
 const applicationHandler = require('./handlers/applicationhandler');
 const store = require('./hire/store');
+const { startAutoSync } = require('./git-sync');
 
 // ---- Create the bot ----
 const client = new Client({
@@ -234,5 +235,12 @@ if (!token) {
   console.error('No DISCORD_TOKEN found. Set it before running the bot.');
   process.exit(1);
 }
+
+// Auto-sync: every 30s, pull new commits from GitHub, then exit so PM2
+// restarts the bot on the new code.
+startAutoSync(
+  { intervalSeconds: 30, hardReset: false },
+  { onBeforeRestart: async () => { await client.destroy(); } },
+).catch(e => console.error('git-sync failed to start:', e.message));
 
 client.login(token);
