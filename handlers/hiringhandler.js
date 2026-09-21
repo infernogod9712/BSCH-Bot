@@ -531,8 +531,11 @@ async function declineContract(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
 
     await interaction.reply({
-        content: `❌ <@${interaction.user.id}> **declined** the contract.\n**Reason:** ${reason}`,
+        content: `❌ <@${interaction.user.id}> **declined** the contract.\n**Reason:** ${reason}\n🔒 This case is now closed. The ticket will be deleted in a moment.`,
     });
+
+    // SOP Step 4: a declined case does not proceed, so close the ticket
+    await closeCaseChannel(interaction.guild, updated, interaction.user.id, "contract-declined", config);
 }
 
 module.exports.updateCaseViews = updateCaseViews;

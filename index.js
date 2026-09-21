@@ -100,30 +100,6 @@ client.on('messageCreate', async (message) => {
     if (handled) return;
   }
 
-  // ---- b!sync : redeploy slash commands to this server (Senior Staff only) ----
-  // Handy when hosting on the Pi so you can sync from Discord instead of the
-  // terminal. Guild commands update instantly.
-  if (message.content.trim().toLowerCase() === 'b!sync') {
-    const seniorIds = [config.roles.owner, config.roles.coOwner, config.roles.admin, config.roles.headStaff].filter(Boolean);
-    const allowed = seniorIds.some(id => message.member.roles.cache.has(id));
-    if (!allowed) return message.reply('❌ Only Senior Staff can sync commands.').catch(() => {});
-
-    const status = await message.reply('🔄 Syncing commands to this server...').catch(() => null);
-    try {
-      const body = [...client.commands.values()].map(c => c.data.toJSON());
-      const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-      const clientId = process.env.CLIENT_ID || client.user.id;
-      await rest.put(Routes.applicationGuildCommands(clientId, message.guild.id), { body });
-      const msg = `✅ Synced ${body.length} commands to this server.`;
-      if (status) await status.edit(msg).catch(() => {}); else await message.reply(msg).catch(() => {});
-    } catch (e) {
-      console.error('b!sync failed:', e);
-      const msg = '❌ Sync failed — check the console for details.';
-      if (status) await status.edit(msg).catch(() => {}); else await message.reply(msg).catch(() => {});
-    }
-    return;
-  }
-
   // Track the client's activity in their hire ticket (for inactivity pings)
   const record = store.getCaseByChannel(message.channel.id);
   if (record && message.author.id === record.clientId) {
@@ -227,9 +203,26 @@ async function sweepCases() {
   }
 }
 
+// ---- Auto-register slash commands ----
+// Guild commands update instantly, so every server the bot is in gets the
+// current command list on startup, and new servers get it when the bot joins.
+async function registerCommands(guild) {
+  const body = [...client.commands.values()].map(c => c.data.toJSON());
+  try {
+    const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+    await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body });
+    console.log(`Registered ${body.length} commands in ${guild.name}`);
+  } catch (e) {
+    console.error(`Command registration failed in ${guild.name}:`, e.message);
+  }
+}
+
+client.on('guildCreate', registerCommands);
+
 // This runs once, when the bot successfully logs in
-client.once('clientReady', () => {
+client.once('clientReady', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
+  for (const guild of client.guilds.cache.values()) await registerCommands(guild);
   // Check the timers every 15 minutes (first run shortly after startup)
   setTimeout(sweepCases, 30 * 1000);
   setInterval(sweepCases, 15 * 60 * 1000);
