@@ -110,7 +110,8 @@ module.exports = {
           (helperIds.length ? `**Helpers:** ${helperIds.map(id => `<@${id}>`).join(', ')}\n` : '') +
           `\nScenario: ${scenario}\n\n` +
           (drillCase
-            ? `<@${roleplayClient.id}>, press **Fill in the hire form** below to start the case, just like a real client would.\n\n`
+            ? `<@${roleplayClient.id}>, press **Fill in the hire form** below to start the case, just like a real client would.\n\n` +
+              `<@${trainee.id}>, you have **${config.timers.drillBuildDeadlineDays || 5} days** to finish the build and hand it in with \`/drillsubmitbuild\`, or the drill ends as a fail.\n\n`
             : '') +
           `When finished, the Head runs \`/drillend\`.`,
         color: 0xf1c40f,

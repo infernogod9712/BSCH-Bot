@@ -74,7 +74,7 @@ module.exports = {
 
         if (!dest) {
             return interaction.editReply({
-                content: "⚠️ Paperwork wasn't posted — set `modPaperworkForum` (or `modLogsChannel`) in config.json.",
+                content: "⚠️ Paperwork wasn't posted — set the Mod paperwork forum (or Mod logs channel) with `/config`.",
             });
         }
 
@@ -93,7 +93,7 @@ module.exports = {
         return interaction.editReply({
             content: posted
                 ? `✅ Paperwork filed for **${action}** on <@${target.id}>.`
-                : "⚠️ Couldn't post the paperwork — check the channel id in config.json.",
+                : "⚠️ Couldn't post the paperwork — check the channel with `/config`.",
         });
     },
 };

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const store = require('../onboarding/store');
-const hireStore = require('../hire/store');
+const { endDrill } = require('../onboarding/drills');
 const { isSenior } = require('../handlers/hiringhandler');
 
 // A Head runs /drillend in the drill channel to record Pass/Fail (SOP Section
@@ -25,78 +25,20 @@ module.exports = {
     }
 
     const drill = store.getDrillByChannel(interaction.channel.id);
-    if (!drill) {
-      return interaction.reply({ content: '❌ Run this inside a drill channel.', flags: 64 });
+    if (!drill || drill.status !== 'in-progress') {
+      return interaction.reply({ content: '❌ Run this inside a drill channel that is still in progress.', flags: 64 });
     }
 
     const result = interaction.options.getString('result');
     const reason = interaction.options.getString('reason');
 
     await interaction.deferReply();
-
-    // Builder drills: close the practice hire case too
-    const drillCase = hireStore.getCaseByChannel(interaction.channel.id);
-    if (drillCase && drillCase.drill && drillCase.status !== 'closed') {
-      hireStore.updateCase(drillCase.ticketId, { status: 'closed', closedAt: new Date().toISOString(), closedBy: interaction.user.id, closeReason: `drill-${result}` });
-    }
-
-    const guild = interaction.guild;
-    const member = await guild.members.fetch(drill.traineeId).catch(() => null);
-    const deptLabel = drill.department === 'mod' ? 'Moderation' : 'Building';
-    const deptRole = drill.department === 'mod' ? config.roles.moderator : config.roles.builder;
-
-    if (result === 'pass') {
-      store.updateDrill(drill.traineeId, { status: 'passed', reason, endedBy: interaction.user.id });
-      if (member) {
-        if (deptRole) await member.roles.add(deptRole).catch(() => {});
-        if (config.roles.staffTeam) await member.roles.add(config.roles.staffTeam).catch(() => {});
-        if (config.roles.trainee) await member.roles.remove(config.roles.trainee).catch(() => {});
-        await member.send({
-          embeds: [{
-            title: '🎉 Drill Passed',
-            description: `Congratulations! You passed your ${deptLabel} drill and are now a full member of the ${deptLabel} department. Welcome aboard!`,
-            color: 0x2ecc71,
-          }],
-        }).catch(() => {});
-      }
-    } else {
-      const days = config.timers.drillFailCooldownDays || 7;
-      store.setCooldown(drill.traineeId, 'drill', Date.now() + days * 24 * 3600 * 1000);
-      store.updateDrill(drill.traineeId, { status: 'failed', reason, endedBy: interaction.user.id });
-      if (member) {
-        await member.send({
-          embeds: [{
-            title: 'Drill Result',
-            description: `You didn\'t pass this drill. Don\'t worry — you can request another one in **${days} days**. Reason given: ${reason}`,
-            color: 0x992d22,
-          }],
-        }).catch(() => {});
-      }
-    }
-
-    // Log the outcome to drill-results.
-    const log = guild.channels.cache.get(config.channels.drillResultsChannel);
-    if (log) {
-      await log.send({
-        embeds: [{
-          title: `🎯 Drill ${result === 'pass' ? 'Passed ✅' : 'Failed ❌'} — ${deptLabel}`,
-          fields: [
-            { name: 'Trainee', value: `<@${drill.traineeId}>`, inline: true },
-            { name: 'Evaluator', value: `<@${interaction.user.id}>`, inline: true },
-            { name: 'Reason', value: reason },
-          ],
-          color: result === 'pass' ? 0x2ecc71 : 0xe74c3c,
-          timestamp: new Date().toISOString(),
-        }],
-      }).catch(() => {});
-    }
+    const { deptLabel, days } = await endDrill(interaction.guild, drill, result, reason, interaction.user.id, config);
 
     await interaction.editReply({
       content: result === 'pass'
         ? `✅ <@${drill.traineeId}> **passed** and was promoted to ${deptLabel}. Closing this channel shortly.`
-        : `❌ <@${drill.traineeId}> **failed**. A ${config.timers.drillFailCooldownDays || 7}-day cooldown was applied. Closing this channel shortly.`,
+        : `❌ <@${drill.traineeId}> **failed**. A ${days}-day cooldown was applied. Closing this channel shortly.`,
     });
-
-    setTimeout(() => interaction.channel.delete().catch(() => {}), 8000);
   },
 };

@@ -307,7 +307,7 @@ The scenario then plays out inside that ticket exactly as a real case or moderat
 
 A builder drill runs as a practice hire case. The role-play Client fills in the same hire form a real client uses, and the bot posts the intake embed with a Claim button. From there every hire command works in the drill ticket, and the Trainee counts as a Builder for that case only. Drill cases are numbered D1, D2 and so on, get no post in hire-bsch-case-logs, skip the claim and inactivity timers, and stay out of client build history. When the practice case closes, the ticket stays open so the Head can grade it with `/drillend`.
 
-For builders, the trainee must build a server based on the fake client’s task, with a deadline of 5 days. The trainee will then run /drillsubmitbuild, and the head looks at the server and grades it. If the trainee does not respond in 5 days, the bot will automatically end the drill.
+For builders, the trainee must build a server based on the fake client’s task, with a deadline of 5 days. The trainee will then run `/drillsubmitbuild` with an invite link to the server, and the head looks at the server and grades it. If the trainee does not hand in a build within 5 days of `/drillstart`, the bot automatically ends the drill as a fail and applies the normal fail cooldown.
 
 For Moderators, the fake client will act as a rule breaker, and the trainee must act in real time what they would do. There are a total of 5 scenarios here, chosen by the head. 
 
@@ -326,6 +326,7 @@ When the scenario concludes, the Head runs `/drillend [result] [reason]`. Result
 | Apply (Builder/Mod/Both) | Any member | Sends applicant to a private application channel; bot asks intake questions in sequence, then deletes the channel and posts the Q&A to application-approval for Senior Staff review. |
 | `/drillrequest [trainee]` | Trainee | Pings all Heads requesting a drill session. |
 | `/drillstart [department] [trainee] [client] [helpers]` | Head | Creates a `[team]-drill-[traineeuser]` ticket and begins the simulated scenario. The running Head is the evaluator. |
+| `/drillsubmitbuild [link] [notes]` | Builder Trainee | Hands in the drill build and pings the Head to grade it. Without it, a builder drill fails after 5 days. |
 | `/drillend [result] [reason]` | Head | Closes the drill with a Pass/Fail result and reason, posted to drill-results. Pass auto-promotes; Fail applies a 1-week cooldown. |
 
 ---
@@ -381,6 +382,10 @@ If the bot goes offline while cases are active (e.g. the server loses power or t
 ### Definition - "Senior Staff"
 
 Section 1 (Hiring SOP) references Senior Staff for dispute arbitration and claim overrides. Senior Staff is defined as **Head Staff and above**: Head Staff, Admin, Co-Owner, and Owner. This is the rank cutoff the bot should use for any permission checks tied to Senior Staff actions.
+
+### Bot Settings
+
+Senior Staff change the bot's channels, categories, roles, timers, donation link and contract with `/config`. Pick a setting (it autocompletes), then give the matching channel, role, number or text. Running `/config` with no setting shows every current value. Changes apply immediately, with no restart.
 
 ---
 

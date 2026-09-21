@@ -6,12 +6,14 @@
 const { Client, GatewayIntentBits, Collection, Partials, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const config = require('./config.json');
+// One live config object: config.json + anything changed with /config
+const config = require('./config-store').load();
 const supportHandler = require('./handlers/supporthandler');
 const hiringHandler = require('./handlers/hiringhandler');
 const modmailHandler = require('./handlers/modmailhandler');
 const applicationHandler = require('./handlers/applicationhandler');
 const store = require('./hire/store');
+const { sweepDrills } = require('./onboarding/drills');
 const { startAutoSync } = require('./git-sync');
 
 // ---- Create the bot ----
@@ -43,6 +45,13 @@ for (const file of commandFiles) {
 
 // ---- Run a command when someone uses one ----
 client.on('interactionCreate', async (interaction) => {
+  // Autocomplete suggestions (e.g. /config setting names)
+  if (interaction.isAutocomplete()) {
+    const command = client.commands.get(interaction.commandName);
+    if (command && command.autocomplete) await command.autocomplete(interaction, config).catch(() => {});
+    return;
+  }
+
   try {
     // Slash command → run the matching command file
     if (interaction.isChatInputCommand()) {
@@ -147,6 +156,9 @@ async function sweepCases() {
     const guild = client.guilds.cache.get(config.guildId);
     if (!guild) return;
     const now = Date.now();
+
+    // Builder drills with no build handed in before the deadline
+    await sweepDrills(guild, config).catch(e => console.error('sweepDrills error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim/inactivity timers
