@@ -30,7 +30,7 @@ module.exports = {
     }
 
     const headPing = config.roles.headStaff ? `<@&${config.roles.headStaff}>` : 'Head Staff';
-    await interaction.reply({
+    const request = {
       content: headPing,
       embeds: [{
         title: '🎯 Drill Requested',
@@ -39,6 +39,16 @@ module.exports = {
         timestamp: new Date().toISOString(),
       }],
       allowedMentions: { roles: config.roles.headStaff ? [config.roles.headStaff] : [] },
-    });
+    };
+
+    // Post the request in the drill request channel; fall back to replying here
+    const requestChannel = interaction.guild.channels.cache.get(config.channels.drillRequestChannel);
+    if (!requestChannel) return interaction.reply(request);
+
+    const sent = await requestChannel.send(request).catch(() => null);
+    if (!sent) {
+      return interaction.reply({ content: '❌ Could not post in the drill request channel. Ask a Head to check the bot\'s permissions there.', flags: 64 });
+    }
+    await interaction.reply({ content: `✅ Drill request sent to ${requestChannel}. A Head will pick it up.`, flags: 64 });
   },
 };

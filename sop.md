@@ -297,7 +297,7 @@ After approving, the trainee is to be handed the link to this document. This doc
 
 ### Requesting a Drill
 
-A Trainee who is ready runs `/drillrequest [trainee]`, which pings all Heads to ask whether one is available to run a drill.
+A Trainee who is ready runs `/drillrequest [trainee]`, which posts the request in the **drill-requests** channel and pings all Heads to ask whether one is available to run a drill.
 
 ### Running the Drill
 
