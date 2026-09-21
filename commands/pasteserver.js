@@ -8,12 +8,8 @@ const {
 } = require("discord.js");
 const templates = require("../hire/templates");
 const { applyTemplate } = require("../hire/serverclone");
-const { isSenior } = require("../handlers/hiringhandler");
-
-function isBuilderOrSenior(member, config) {
-    if (config.roles.builder && member.roles.cache.has(config.roles.builder)) return true;
-    return isSenior(member, config);
-}
+// Roles are checked in the main BSCH server, since this runs in a client's server
+const { isMainServerBuilder } = require("../handlers/hiringhandler");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -23,7 +19,7 @@ module.exports = {
             o.setName("name").setDescription("Which saved template to paste").setRequired(true)),
 
     async execute(interaction, client, config) {
-        if (!isBuilderOrSenior(interaction.member, config)) {
+        if (!(await isMainServerBuilder(client, interaction.user.id, config))) {
             return interaction.reply({ content: "❌ Only Builders can paste a server.", flags: 64 });
         }
 

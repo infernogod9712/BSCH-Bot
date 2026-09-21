@@ -305,6 +305,8 @@ A Head who picks up the request runs `/drillstart [department] [trainee] [client
 
 The scenario then plays out inside that ticket exactly as a real case or moderation situation would, with the named Client acting their part and Helpers assisting as needed, while the Head evaluates the Trainee's handling of it in real time.
 
+A builder drill runs as a practice hire case. The role-play Client fills in the same hire form a real client uses, and the bot posts the intake embed with a Claim button. From there every hire command works in the drill ticket, and the Trainee counts as a Builder for that case only. Drill cases are numbered D1, D2 and so on, get no post in hire-bsch-case-logs, skip the claim and inactivity timers, and stay out of client build history. When the practice case closes, the ticket stays open so the Head can grade it with `/drillend`.
+
 For builders, the trainee must build a server based on the fake client’s task, with a deadline of 5 days. The trainee will then run /drillsubmitbuild, and the head looks at the server and grades it. If the trainee does not respond in 5 days, the bot will automatically end the drill.
 
 For Moderators, the fake client will act as a rule breaker, and the trainee must act in real time what they would do. There are a total of 5 scenarios here, chosen by the head. 

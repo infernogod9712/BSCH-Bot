@@ -29,10 +29,18 @@ function writeData(data) {
 // Create a new case. Bumps the counter to make a fresh ticketId, stamps in
 // the default fields every case starts with, then merges whatever extra
 // fields the caller passed (clientId, intake answers, etc).
+// Builder drill cases (fields.drill) get their own D-numbered ids so they
+// don't use up real case numbers.
 function createCase(fields) {
   const data = readData();
-  data.counter += 1;
-  const ticketId = data.counter;
+  let ticketId;
+  if (fields.drill) {
+    data.drillCounter = (data.drillCounter || 0) + 1;
+    ticketId = `D${data.drillCounter}`;
+  } else {
+    data.counter += 1;
+    ticketId = data.counter;
+  }
 
   const record = {
     ticketId,
@@ -69,18 +77,20 @@ function updateCase(ticketId, patch) {
   return data.cases[ticketId];
 }
 
+// Drill cases are practice, so the client lookups below skip them.
+
 // A client's finished builds (for the build-history lookup on intake).
 function getClosedCasesByClient(clientId) {
   const data = readData();
   return Object.values(data.cases)
-    .filter(c => c.clientId === clientId && c.status === 'closed');
+    .filter(c => !c.drill && c.clientId === clientId && c.status === 'closed');
 }
 
 // Any still-open case for this client (used to block duplicate hire tickets).
 function getOpenCaseByClient(clientId) {
   const data = readData();
   return Object.values(data.cases)
-    .find(c => c.clientId === clientId && c.status !== 'closed') || null;
+    .find(c => !c.drill && c.clientId === clientId && c.status !== 'closed') || null;
 }
 
 // Every case a client has ever had (open or closed), newest first. Used by
@@ -88,7 +98,7 @@ function getOpenCaseByClient(clientId) {
 function getAllCasesByClient(clientId) {
   const data = readData();
   return Object.values(data.cases)
-    .filter(c => c.clientId === clientId)
+    .filter(c => !c.drill && c.clientId === clientId)
     .sort((a, b) => b.ticketId - a.ticketId);
 }
 

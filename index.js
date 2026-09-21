@@ -149,7 +149,8 @@ async function sweepCases() {
     const now = Date.now();
 
     for (const record of store.getAllCases()) {
-      if (record.status === 'closed' || !record.channelId) continue;
+      // Drill cases run on the Head's schedule, not the claim/inactivity timers
+      if (record.drill || record.status === 'closed' || !record.channelId) continue;
 
       // Unclaimed claim timers
       if (!record.lead && record.status === 'open') {

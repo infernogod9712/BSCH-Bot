@@ -1,11 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const store = require("../hire/store");
-const { updateCaseViews, promptTemplateBank, isSenior } = require("../handlers/hiringhandler");
-
-function isBuilderOrSenior(member, config) {
-    if (config.roles.builder && member.roles.cache.has(config.roles.builder)) return true;
-    return isSenior(member, config);
-}
+const { updateCaseViews, promptTemplateBank, isSenior, isCaseBuilder } = require("../handlers/hiringhandler");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -27,7 +22,7 @@ module.exports = {
         if (!record) {
             return interaction.reply({ content: "❌ Run this inside a hire case ticket.", flags: 64 });
         }
-        if (!isBuilderOrSenior(interaction.member, config)) {
+        if (!isCaseBuilder(interaction.member, record, config)) {
             return interaction.reply({ content: "❌ Only Builders on the case can file paperwork.", flags: 64 });
         }
 

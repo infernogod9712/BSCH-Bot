@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 const store = require('../onboarding/store');
+const hireStore = require('../hire/store');
 const { isSenior } = require('../handlers/hiringhandler');
 
 // A Head runs /drillend in the drill channel to record Pass/Fail (SOP Section
@@ -32,6 +33,12 @@ module.exports = {
     const reason = interaction.options.getString('reason');
 
     await interaction.deferReply();
+
+    // Builder drills: close the practice hire case too
+    const drillCase = hireStore.getCaseByChannel(interaction.channel.id);
+    if (drillCase && drillCase.drill && drillCase.status !== 'closed') {
+      hireStore.updateCase(drillCase.ticketId, { status: 'closed', closedAt: new Date().toISOString(), closedBy: interaction.user.id, closeReason: `drill-${result}` });
+    }
 
     const guild = interaction.guild;
     const member = await guild.members.fetch(drill.traineeId).catch(() => null);

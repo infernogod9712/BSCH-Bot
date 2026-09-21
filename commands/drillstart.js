@@ -1,5 +1,6 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const store = require('../onboarding/store');
+const hireStore = require('../hire/store');
 const { isSenior } = require('../handlers/hiringhandler');
 
 // A Head runs /drillstart to spin up a simulated scenario ticket for a Trainee
@@ -79,8 +80,26 @@ module.exports = {
       ? 'a simulated **moderation** scenario — handle it like a real incident.'
       : 'a simulated **hiring case** — run it through the Hiring SOP like a real build.';
 
-    await channel.send({
-      content: `<@${trainee.id}>`,
+    // Builder drills run as a practice hire case in this channel
+    const drillCase = department === 'builder'
+      ? hireStore.createCase({
+          drill: true,
+          traineeId: trainee.id,
+          headId: interaction.user.id,
+          clientId: roleplayClient.id,
+          channelId: channel.id,
+        })
+      : null;
+
+    const intakeRow = drillCase
+      ? [new ActionRowBuilder().addComponents(
+          new ButtonBuilder().setCustomId('hire_drill_intake').setLabel('📝 Fill in the hire form').setStyle(ButtonStyle.Primary),
+        )]
+      : [];
+
+    const intro = await channel.send({
+      content: drillCase ? `<@${trainee.id}> <@${roleplayClient.id}>` : `<@${trainee.id}>`,
+      components: intakeRow,
       embeds: [{
         title: `🎯 ${teamSlug === 'mod' ? 'Moderation' : 'Building'} Drill`,
         description:
@@ -89,11 +108,17 @@ module.exports = {
           `**Evaluator (Head):** <@${interaction.user.id}>\n` +
           `**Client (role-play):** <@${roleplayClient.id}>\n` +
           (helperIds.length ? `**Helpers:** ${helperIds.map(id => `<@${id}>`).join(', ')}\n` : '') +
-          `\nScenario: ${scenario}\n\nWhen finished, the Head runs \`/drillend\`.`,
+          `\nScenario: ${scenario}\n\n` +
+          (drillCase
+            ? `<@${roleplayClient.id}>, press **Fill in the hire form** below to start the case, just like a real client would.\n\n`
+            : '') +
+          `When finished, the Head runs \`/drillend\`.`,
         color: 0xf1c40f,
         timestamp: new Date().toISOString(),
       }],
     });
+
+    if (drillCase) hireStore.updateCase(drillCase.ticketId, { intakePromptMessageId: intro.id });
 
     return interaction.editReply({ content: `✅ Drill started: ${channel}` });
   },

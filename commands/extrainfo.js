@@ -1,14 +1,6 @@
 const { SlashCommandBuilder } = require("discord.js");
 const store = require("../hire/store");
-const { updateCaseViews } = require("../handlers/hiringhandler");
-
-function isBuilderOrSenior(member, config) {
-    if (config.roles.builder && member.roles.cache.has(config.roles.builder)) return true;
-    const seniorIds = (config.roles.seniorStaffRoles || [])
-        .map(name => config.roles[name])
-        .filter(Boolean);
-    return seniorIds.some(id => member.roles.cache.has(id));
-}
+const { updateCaseViews, isCaseBuilder } = require("../handlers/hiringhandler");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -26,7 +18,7 @@ module.exports = {
             return interaction.reply({ content: "❌ Run this inside a hire case ticket.", flags: 64 });
         }
 
-        if (!isBuilderOrSenior(interaction.member, config)) {
+        if (!isCaseBuilder(interaction.member, record, config)) {
             return interaction.reply({ content: "❌ Only Builders on the case can add Extra Info.", flags: 64 });
         }
 

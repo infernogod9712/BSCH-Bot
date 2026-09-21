@@ -28,6 +28,14 @@ module.exports = {
             return createHireTicket(interaction, client, config);
         }
 
+        // Builder drill: role-play client fills in the same hire form
+        if (interaction.isButton() && interaction.customId === "hire_drill_intake") {
+            return openDrillIntakeModal(interaction, config);
+        }
+        if (interaction.isModalSubmit() && interaction.customId === "hire_drill_intakemodal") {
+            return submitDrillIntake(interaction, config);
+        }
+
         // Clicked Claim -> assign Lead + update both the ticket and case file
         if (interaction.isButton() && interaction.customId === "hire_claim") {
             return claimCase(interaction, client, config);
@@ -99,9 +107,14 @@ async function openIntakeModal(interaction) {
         });
     }
 
+    await interaction.showModal(buildIntakeModal("hiremodal", "Hire BSCH — Tell us about your build"));
+}
+
+// The hire intake form. Real hire tickets and builder drills use the same one.
+function buildIntakeModal(customId, title) {
     const modal = new ModalBuilder()
-        .setCustomId("hiremodal")
-        .setTitle("Hire BSCH — Tell us about your build");
+        .setCustomId(customId)
+        .setTitle(title);
 
     // Discord modals allow up to 5 inputs, each in its own row.
     const concept = new TextInputBuilder()
@@ -140,8 +153,72 @@ async function openIntakeModal(interaction) {
         new ActionRowBuilder().addComponents(anythingElse),
     );
 
-    await interaction.showModal(modal);
+    return modal;
 }
+
+function readIntake(interaction) {
+    return {
+        concept: interaction.fields.getTextInputValue("concept"),
+        references: interaction.fields.getTextInputValue("references"),
+        timeframe: interaction.fields.getTextInputValue("timeframe"),
+        anythingElse: interaction.fields.getTextInputValue("anythingElse"),
+    };
+}
+
+// ------------------------------------------------------------------
+// Builder drills — a practice hire case inside the drill channel.
+// /drillstart makes the case; the role-play client fills in the hire form,
+// then the bot posts the intake embed + Claim button like a real ticket.
+// No case-log forum post, no claim timers, no transcript.
+// ------------------------------------------------------------------
+async function openDrillIntakeModal(interaction, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record || !record.drill) {
+        return interaction.reply({ content: "❌ This isn't a builder drill channel.", flags: 64 });
+    }
+    if (interaction.user.id !== record.clientId && !isSenior(interaction.member, config)) {
+        return interaction.reply({ content: "❌ Only the role-play client fills in the hire form.", flags: 64 });
+    }
+    if (record.embedMessageId) {
+        return interaction.reply({ content: "❌ The hire form for this drill is already filled in.", flags: 64 });
+    }
+    await interaction.showModal(buildIntakeModal("hire_drill_intakemodal", "Drill — Tell us about your build"));
+}
+
+async function submitDrillIntake(interaction, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record || !record.drill) {
+        return interaction.reply({ content: "❌ This isn't a builder drill channel.", flags: 64 });
+    }
+    if (record.embedMessageId) {
+        return interaction.reply({ content: "❌ The hire form for this drill is already filled in.", flags: 64 });
+    }
+
+    const updated = store.updateCase(record.ticketId, { intake: readIntake(interaction) });
+
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+            .setCustomId("hire_claim")
+            .setLabel("✋ Claim Case")
+            .setStyle(ButtonStyle.Success)
+    );
+
+    await interaction.reply({ content: "📝 Hire form received." });
+    const embedMessage = await interaction.channel.send({
+        content: `<@${record.traineeId}>`,
+        embeds: [buildCaseEmbed(updated, DRILL_HISTORY)],
+        components: [row],
+    });
+    store.updateCase(record.ticketId, { embedMessageId: embedMessage.id });
+
+    // Take the "fill in the form" button off the drill intro message
+    if (record.intakePromptMessageId) {
+        const prompt = await interaction.channel.messages.fetch(record.intakePromptMessageId).catch(() => null);
+        if (prompt) await prompt.edit({ components: [] }).catch(() => {});
+    }
+}
+
+const DRILL_HISTORY = "Training drill (not a real client).";
 
 // ------------------------------------------------------------------
 // Step 3 — build the whole case from the modal answers
@@ -155,12 +232,7 @@ async function createHireTicket(interaction, client, config) {
     // 1) Save the case first — this assigns the unique ticketId
     const record = store.createCase({
         clientId: user.id,
-        intake: {
-            concept: interaction.fields.getTextInputValue("concept"),
-            references: interaction.fields.getTextInputValue("references"),
-            timeframe: interaction.fields.getTextInputValue("timeframe"),
-            anythingElse: interaction.fields.getTextInputValue("anythingElse"),
-        },
+        intake: readIntake(interaction),
     });
 
     // 2) Work out who can see the ticket: the client, all Builders, Senior Staff
@@ -345,8 +417,8 @@ function buildCaseEmbed(record, historyText) {
     });
 
     return {
-        title: `📋 Hire Case #${record.ticketId}`,
-        color: 0x2ecc71,
+        title: record.drill ? `🎯 Drill Case #${record.ticketId}` : `📋 Hire Case #${record.ticketId}`,
+        color: record.drill ? 0xf1c40f : 0x2ecc71,
         fields,
         timestamp: new Date().toISOString(),
     };
@@ -367,16 +439,8 @@ async function claimCase(interaction, client, config) {
         });
     }
 
-    // Only Builders (or Senior Staff) may claim
-    const member = interaction.member;
-    const seniorIds = (config.roles.seniorStaffRoles || [])
-        .map(name => config.roles[name])
-        .filter(Boolean);
-    const canClaim =
-        (config.roles.builder && member.roles.cache.has(config.roles.builder)) ||
-        seniorIds.some(id => member.roles.cache.has(id));
-
-    if (!canClaim) {
+    // Only Builders (or Senior Staff, or the trainee in a drill) may claim
+    if (!isCaseBuilder(interaction.member, record, config)) {
         return interaction.reply({
             content: "❌ Only Builders can claim cases.",
             flags: 64,
@@ -417,9 +481,11 @@ async function claimCase(interaction, client, config) {
 // Every stage (claim, roster, extra info, contract...) calls this.
 async function updateCaseViews(guild, record) {
     const closed = store.getClosedCasesByClient(record.clientId);
-    const historyText = closed.length
-        ? closed.map(c => `#${c.ticketId}`).join(", ")
-        : "First-time client (no past builds).";
+    const historyText = record.drill
+        ? DRILL_HISTORY
+        : closed.length
+            ? closed.map(c => `#${c.ticketId}`).join(", ")
+            : "First-time client (no past builds).";
     const embed = buildCaseEmbed(record, historyText);
 
     // 1) The embed message inside the ticket channel
@@ -531,7 +597,7 @@ async function declineContract(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
 
     await interaction.reply({
-        content: `❌ <@${interaction.user.id}> **declined** the contract.\n**Reason:** ${reason}\n🔒 This case is now closed. The ticket will be deleted in a moment.`,
+        content: `❌ <@${interaction.user.id}> **declined** the contract.\n**Reason:** ${reason}\n🔒 This case is now closed.` + (record.drill ? "" : " The ticket will be deleted in a moment."),
     });
 
     // SOP Step 4: a declined case does not proceed, so close the ticket
@@ -553,6 +619,13 @@ function isSenior(member, config) {
 }
 function isLeadOrSenior(member, record, config) {
     return member.id === record.lead || isSenior(member, config);
+}
+// Builders and Senior Staff can work any case. In a builder drill the trainee
+// doesn't have the Builder role yet, so they count as a Builder for that case.
+function isCaseBuilder(member, record, config) {
+    if (config.roles.builder && member.roles.cache.has(config.roles.builder)) return true;
+    if (record && record.drill && member.id === record.traineeId) return true;
+    return isSenior(member, config);
 }
 
 // ==================================================================
@@ -726,7 +799,10 @@ async function templateClientYes(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
     await interaction.message.edit({ components: [] });
 
-    const builderMention = config.roles.builder ? `<@&${config.roles.builder}>` : "Builders";
+    // In a drill, the trainee does the copy step; don't ping the real Builders
+    const builderMention = record.drill
+        ? `<@${record.traineeId}>`
+        : config.roles.builder ? `<@&${config.roles.builder}>` : "Builders";
     await interaction.channel.send(
         `✅ The client agreed! ${builderMention} — please run \`/copyserver\` **inside the client's server** to save the layout into the template bank, ` +
         `then come back here and run \`/copyphasedone\`.`
@@ -839,6 +915,15 @@ async function closeCaseChannel(guild, record, closedById, reason, config) {
     });
     await updateCaseViews(guild, updated);
 
+    // Drill cases: keep the channel so the Head can grade it with /drillend
+    if (record.drill) {
+        const ch = await guild.channels.fetch(record.channelId).catch(() => null);
+        if (ch) {
+            await ch.send(`🎯 The practice case is finished (${reason || "closed"}). <@${record.headId}>, grade it with \`/drillend\`.`).catch(() => {});
+        }
+        return updated;
+    }
+
     let channel = null;
     try {
         channel = record.channelId ? await guild.channels.fetch(record.channelId) : null;
@@ -913,3 +998,15 @@ module.exports.sendFinalCloseEmbed = sendFinalCloseEmbed;
 module.exports.closeCaseChannel = closeCaseChannel;
 module.exports.isSenior = isSenior;
 module.exports.isLeadOrSenior = isLeadOrSenior;
+module.exports.isCaseBuilder = isCaseBuilder;
+
+// /copyserver and /pasteserver run inside a CLIENT's server, where nobody has
+// BSCH roles. Look the user up in the main BSCH server instead. A trainee with
+// an open builder drill also counts, so they can do the drill's copy step.
+async function isMainServerBuilder(client, userId, config) {
+    const main = client.guilds.cache.get(config.guildId);
+    const member = main ? await main.members.fetch(userId).catch(() => null) : null;
+    if (member && isCaseBuilder(member, null, config)) return true;
+    return store.getAllCases().some(c => c.drill && c.status !== "closed" && c.traineeId === userId);
+}
+module.exports.isMainServerBuilder = isMainServerBuilder;
