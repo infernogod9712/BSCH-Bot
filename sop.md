@@ -257,7 +257,8 @@ Applications are handled entirely in-Discord, not through an external form. A me
 
 **General questions (asked of every applicant):**
 
-- Discord Username and ID
+The bot records the applicant's Discord username and user ID automatically, so it does not ask for them.
+
 - Timezone
 - Roughly when are you usually online? (If you are in school or work, please consider that in your answer.)
 - Why are you considering joining us?

@@ -4,7 +4,6 @@
 // list for a given department pick (builder / mod / both).
 
 const GENERAL = [
-  'Discord Username and ID',
   'Timezone',
   'Roughly when are you usually online? (If you are in school or work, please consider that in your answer.)',
   'Why are you considering joining us?',
