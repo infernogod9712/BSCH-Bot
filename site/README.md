@@ -25,18 +25,22 @@ python -m http.server 8777 --directory dist
 
 Then open http://localhost:8777.
 
-## Deploy on Cloudflare Pages (once)
+## Deploy on Cloudflare (once)
 
-1. Go to dash.cloudflare.com and sign in (a free account is enough).
-2. **Workers & Pages** -> **Create** -> **Pages** -> **Connect to Git**.
-3. Pick the `BSCH-Bot` repo and authorise Cloudflare to read it.
-4. Set the build settings exactly:
-   - Framework preset: **None**
-   - Build command: `cd site && npm install && npm run build`
-   - Build output directory: `site/dist`
-5. **Save and Deploy**. A minute later the site is live at `<project>.pages.dev`.
+The dashboard now routes static sites through Workers instead of Pages, so the
+settings live in `wrangler.jsonc` at the repo root, pointing at `site/dist`.
 
-Every push to `master` rebuilds it. No other step.
+1. dash.cloudflare.com -> **Workers & Pages** -> **Create** -> import this repo.
+2. Project name: `bsch`. It has to match `name` in `wrangler.jsonc`, and it becomes the URL.
+3. Build command: `cd site && npm install && npm run build`
+4. Deploy command: leave `npx wrangler deploy` as it is.
+5. Leave **Protect with Cloudflare Access** off, or the public pages ask for a login too.
+6. **Deploy**. It goes live at `bsch.<your-subdomain>.workers.dev`.
+
+Every push to `master` rebuilds and redeploys it. No other step.
+
+Only `site/dist` is uploaded. The bot's own code is not served, and the bot keeps
+running on the Raspberry Pi as before.
 
 ## The SOP link
 

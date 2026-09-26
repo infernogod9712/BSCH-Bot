@@ -1,0 +1,11 @@
+{
+  // Cloudflare config for the BSCH site. This deploys ONLY site/dist,
+  // the static pages built from site/src and sop.md. The bot itself is
+  // not uploaded and does not run here — it runs on the Raspberry Pi.
+  "name": "bsch",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    "directory": "./site/dist",
+    "not_found_handling": "404-page"
+  }
+}
