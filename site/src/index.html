@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BSCH — free SCP roleplay server builds</title>
+<meta name="description" content="Beanz's Server Creating Helpers builds SCP roleplay Discord servers for free. Open a ticket, get a builder, keep the server.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="/base.css">
+<style>
+  /* ---- hero ---- */
+  .hero { padding: 64px 0 56px; }
+  .hero .shell { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: start; }
+  .hero h1 { font-size: clamp(2.3rem, 5.2vw, 3.6rem); letter-spacing: -0.02em; }
+  .hero p.lede { font-size: 1.17rem; color: var(--ink-soft); max-width: 46ch; margin: 20px 0 0; }
+  .hero .actions { display: flex; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
+  .hero .terms { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
+  .hero .terms b { color: var(--ink); font-weight: 600; }
+
+  /* ---- the case file: BSCH's own artefact, used as the hero image ---- */
+  .file {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-left: 4px solid var(--stamp);
+  }
+  .file header {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 13px 18px; border-bottom: 1px solid var(--rule);
+    font: 500 12.5px/1 "IBM Plex Mono", monospace; color: var(--ink-soft);
+  }
+  .file h2 { padding: 18px 18px 0; font-size: 1.25rem; }
+  .file dl { margin: 14px 0 0; padding: 0 18px 18px; display: grid; grid-template-columns: 128px 1fr; gap: 9px 14px; font-size: 14.5px; }
+  .file dt { color: var(--ink-soft); }
+  .file dd { margin: 0; }
+  .file .phase { color: var(--stamp); font-weight: 600; }
+  .file footer { border-top: 1px dashed var(--rule); padding: 12px 18px; font-size: 13.5px; color: var(--ink-soft); }
+
+  /* ---- sections ---- */
+  section.band { padding: 54px 0; border-top: 1px solid var(--rule); }
+  section.band h2 { font-size: 1.7rem; }
+  section.band > .shell > p { max-width: 62ch; color: var(--ink-soft); margin: 14px 0 0; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; margin-top: 34px; counter-reset: step; }
+  .steps li { list-style: none; counter-increment: step; border-top: 2px solid var(--ink); padding-top: 14px; }
+  .steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--stamp); display: block; margin-bottom: 8px;
+  }
+  .steps h3 { font-size: 1.05rem; }
+  .steps p { margin: 7px 0 0; font-size: 14.8px; color: var(--ink-soft); }
+
+  .scope { display: grid; grid-template-columns: 1fr 1fr; gap: 0 46px; margin: 28px 0 0; padding: 0; }
+  .scope li { list-style: none; padding: 13px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 12px; }
+  .scope li b { font-weight: 600; min-width: 148px; }
+  .scope li span { color: var(--ink-soft); font-size: 15px; }
+
+  .cta { text-align: center; padding: 60px 0 10px; }
+  .cta h2 { font-size: 2rem; }
+  .cta p { color: var(--ink-soft); margin: 14px auto 26px; max-width: 48ch; }
+
+  @media (max-width: 860px) {
+    .hero .shell, .steps, .scope { grid-template-columns: 1fr; }
+    .hero { padding-top: 40px; }
+    .steps { gap: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="/">BSCH <span>EST. 2026</span></a>
+    <nav>
+      <a href="/flow.html">How a build runs</a>
+      <a href="#staff">Join the team</a>
+      <a class="discord" href="#hire">Hire us</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="shell">
+      <div>
+        <h1>We build SCP roleplay servers, and we don't charge for it.</h1>
+        <p class="lede">Beanz's Server Creating Helpers is a volunteer crew of Discord builders. You describe the site you want. A builder claims it, builds it live in your server, and hands it back. The server stays yours.</p>
+        <div class="actions">
+          <a class="btn" href="#hire">Open a hire ticket</a>
+          <a class="btn ghost" href="/flow.html">See how a build runs</a>
+        </div>
+        <p class="terms">Free, with <b>no catch</b>: no payment, no subscription, no ads in your server, no credit required. Donations are offered once at the end and change nothing.</p>
+      </div>
+
+      <article class="file" aria-label="Example case file">
+        <header><span>CASE #0147</span><span class="stamp">IN PROGRESS</span></header>
+        <h2>Site-19 relocation build</h2>
+        <dl>
+          <dt>Client</dt><dd>@heavylock</dd>
+          <dt>Phase</dt><dd class="phase">Building</dd>
+          <dt>Lead builder</dt><dd>@coolbeanz02778</dd>
+          <dt>Helpers</dt><dd>@brooksy246</dd>
+          <dt>Extra info #1</dt><dd>Containment wing needs its own category per SCP</dd>
+          <dt>Extra info #2</dt><dd>MTF channels locked behind clearance roles</dd>
+        </dl>
+        <footer>Every request you make is written into the case file, numbered, and kept where you can read it.</footer>
+      </article>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell">
+      <h2>What a build covers</h2>
+      <p>One SCP roleplay server, set up properly. We work to what's written in your ticket, and anything outside that comes back to you before it gets built.</p>
+      <ul class="scope">
+        <li><b>Channels</b><span>Laid out by department, with the permissions actually set, not left on default.</span></li>
+        <li><b>Roles</b><span>Clearance levels, MTF units, staff ranks, and the hierarchy that makes them work.</span></li>
+        <li><b>Categories</b><span>Containment, research, security, off-site, arranged so members can find things.</span></li>
+        <li><b>Lore fit</b><span>Naming and structure that matches your site's story, not a generic template.</span></li>
+        <li><b>Handover</b><span>Admin access removed the moment we're done. We tell you when to revoke it.</span></li>
+        <li><b>Afterwards</b><span>Come back any time. Your old builds are on file and we can pick up from them.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="shell">
+      <h2>How it works</h2>
+      <p>Three things happen on your side. The rest is ours.</p>
+      <ol class="steps">
+        <li>
+          <h3>Open a ticket</h3>
+          <p>Answer four questions about the server you want. A builder claims it, usually the same day.</p>
+        </li>
+        <li>
+          <h3>Sign and give access</h3>
+          <p>You read a short agreement and press accept, then hand your builder an admin role so they can work live.</p>
+        </li>
+        <li>
+          <h3>Take it back</h3>
+          <p>Build finished, access revoked, ticket closed. Leave a rating if you feel like it.</p>
+        </li>
+      </ol>
+      <p style="margin-top:26px"><a href="/flow.html">See every step of the process, including what happens if something goes wrong.</a></p>
+    </div>
+  </section>
+
+  <section class="band" id="staff">
+    <div class="shell">
+      <h2>Join the team</h2>
+      <p>We take builders and moderators. You apply in Discord, the bot asks you a set of questions, and Head Staff read your answers. Accepted applicants come in as Trainee and run one drill: a full practice case with a staff member playing the client. Pass it and you're a full Builder or Moderator.</p>
+      <p style="margin-top:14px">No experience running a public server is required for moderation. For building, show us something you've made.</p>
+    </div>
+  </section>
+
+  <section class="band cta" id="hire">
+    <div class="shell">
+      <h2>Ready when you are</h2>
+      <p>Open a ticket in our Discord and tell us about your site. If nobody claims it within two days, the bot apologizes and closes it, so you're never left waiting on silence.</p>
+      <a class="btn" href="https://discord.gg/" rel="noopener">Join the Discord</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="shell">
+    <span>BSCH — Beanz's Server Creating Helpers</span>
+    <a href="/flow.html">Hire flow</a>
+    <span style="margin-left:auto">Not affiliated with the SCP Foundation wiki. SCP content is CC BY-SA 3.0.</span>
+  </div>
+</footer>
+
+</body>
+</html>

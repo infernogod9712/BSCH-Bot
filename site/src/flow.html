@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How a BSCH build runs</title>
+<meta name="description" content="Every step of a BSCH hire case, from opening a ticket to closing it, including what happens when something goes wrong.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="/base.css">
+<style>
+  .page { padding: 44px 0 10px; }
+  .page h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); }
+  .page p.lede { color: var(--ink-soft); max-width: 60ch; margin: 16px 0 0; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 13.5px; margin: 26px 0 16px; }
+  .key { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 22px; height: 14px; }
+  .sw.term { border-radius: 7px; }
+  .sw.dec { width: 24px; height: 14px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: var(--ink); }
+  .ln { width: 26px; height: 3px; }
+
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); background: #fbfbf8; }
+  svg { display: block; }
+  .node div {
+    height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;
+    font: 500 12.5px/1.35 "IBM Plex Sans", system-ui, sans-serif; padding: 6px 12px; box-sizing: border-box;
+  }
+  .node b { font-weight: 700; margin-right: 4px; opacity: .8; }
+  .node code { font: 500 12px "IBM Plex Mono", ui-monospace, Consolas, monospace; background: rgba(255,255,255,.16); padding: 0 3px; border-radius: 2px; }
+  .node.dec code, .node.term code { background: rgba(0,0,0,.08); }
+  .lbl { font: 700 12px "IBM Plex Sans", system-ui, sans-serif; paint-order: stroke; stroke: #fbfbf8; stroke-width: 5px; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="/">BSCH <span>EST. 2026</span></a>
+    <nav>
+      <a href="/flow.html" aria-current="page">How a build runs</a>
+      <a href="/#staff">Join the team</a>
+      <a href="/#hire">Hire us</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="shell">
+    <h1>How a build runs</h1>
+    <p class="lede">Every step of a hire case, from the ticket opening to the moment it's archived. Squares are things that happen, diamonds are decisions, and the rounded ends are where a case starts and stops. Scroll sideways on a phone.</p>
+
+    <div class="legend">
+      <span class="key"><span class="sw" style="background:#1f5fbf"></span>Bot</span>
+      <span class="key"><span class="sw" style="background:#17553a"></span>Client</span>
+      <span class="key"><span class="sw" style="background:#6a3d9e"></span>Staff</span>
+      <span class="key"><span class="sw term" style="background:#2fd3b0"></span>Start / end</span>
+      <span class="key"><span class="sw dec"></span>Decision</span>
+      <span class="key"><span class="ln" style="background:#1f9d4a"></span>Yes</span>
+      <span class="key"><span class="ln" style="background:#d0342c"></span>No</span>
+      <span class="key"><span class="ln" style="background:#e3a900"></span>Loop as needed</span>
+    </div>
+
+    <div class="scroller"><svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  </div>
+</main>
+
+<footer class="site">
+  <div class="shell">
+    <span>BSCH — Beanz's Server Creating Helpers</span>
+    <a href="/">Home</a>
+    <span style="margin-left:auto">Staff: the written procedure lives in the SOP.</span>
+  </div>
+</footer>
+
+<script src="/flow-chart.js"></script>
+</body>
+</html>

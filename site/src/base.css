@@ -1,0 +1,140 @@
+/* BSCH site — shared styles.
+   Cold institutional document: SCP paperwork, not a SaaS landing page. */
+
+:root {
+  --ink: #14181d;
+  --ink-soft: #4a545f;
+  --paper: #edeff2;
+  --panel: #ffffff;
+  --rule: #c7cdd6;
+  --stamp: #a81f1a;
+  --link: #1d4e74;
+  --shell: 1120px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e7ebf1;
+    --ink-soft: #99a3af;
+    --paper: #101419;
+    --panel: #171c23;
+    --rule: #2b323b;
+    --stamp: #e06a63;
+    --link: #77b4e0;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.65 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  line-height: 1.2;
+  text-wrap: balance;
+  margin: 0;
+}
+
+a { color: var(--link); text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+code, .mono {
+  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.shell { width: min(var(--shell), 100% - 40px); margin-inline: auto; }
+
+/* ---- site header ---- */
+.masthead {
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+}
+.masthead .shell {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 62px;
+  flex-wrap: wrap;
+}
+.wordmark {
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.wordmark span {
+  font: 500 11px/1 "IBM Plex Mono", monospace;
+  color: var(--ink-soft);
+  border: 1px solid var(--rule);
+  padding: 3px 5px;
+}
+.masthead nav { margin-left: auto; display: flex; gap: 22px; font-size: 14.5px; }
+.masthead nav a { color: var(--ink-soft); text-decoration: none; }
+.masthead nav a:hover, .masthead nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 12px 22px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  border: 1px solid var(--ink);
+}
+.btn:hover { background: transparent; color: var(--ink); }
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.ghost:hover { background: var(--ink); color: var(--paper); }
+
+/* ---- classification stamp ---- */
+.stamp {
+  display: inline-block;
+  border: 2px solid var(--stamp);
+  color: var(--stamp);
+  font: 600 11.5px/1 "IBM Plex Mono", monospace;
+  letter-spacing: 0.14em;
+  padding: 6px 9px;
+  transform: rotate(-1.5deg);
+}
+
+footer.site {
+  border-top: 1px solid var(--rule);
+  margin-top: 72px;
+  padding: 28px 0 44px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+footer.site .shell { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
+footer.site a { color: var(--ink-soft); }
+
+/* Text that only screen readers should get */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; border: 0;
+  clip-path: inset(50%);
+  overflow: hidden; white-space: nowrap;
+}

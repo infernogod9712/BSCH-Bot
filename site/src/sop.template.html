@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BSCH Staff SOP</title>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="/base.css">
+<style>
+  .doc { display: grid; grid-template-columns: 268px minmax(0, 1fr); gap: 48px; align-items: start; padding: 30px 0 0; }
+
+  /* ---- section rail ---- */
+  .rail { position: sticky; top: calc(78px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 110px); display: flex; flex-direction: column; }
+  .rail input {
+    width: 100%; padding: 9px 11px; font: 400 14px "IBM Plex Sans", sans-serif;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+  }
+  .rail input::placeholder { color: var(--ink-soft); }
+  .rail nav { overflow-y: auto; margin-top: 14px; padding-right: 6px; }
+  .rail a {
+    display: block; padding: 5px 0 5px 12px; font-size: 14px; line-height: 1.35;
+    color: var(--ink-soft); text-decoration: none; border-left: 2px solid var(--rule);
+  }
+  .rail a.sub { padding-left: 24px; font-size: 13.2px; }
+  .rail a:hover { color: var(--ink); }
+  .rail a.here { color: var(--ink); border-left-color: var(--stamp); font-weight: 600; }
+  .rail a[hidden] { display: none; }
+  .rail .count { margin-top: 10px; font: 400 12.5px "IBM Plex Mono", monospace; color: var(--ink-soft); }
+
+  /* ---- document ---- */
+  .doc article { max-width: 74ch; padding-bottom: 80px; }
+  .doc article > h1 { font-size: clamp(1.9rem, 4vw, 2.5rem); }
+  .doc article h2 { font-size: 1.6rem; margin: 52px 0 0; padding-top: 22px; border-top: 2px solid var(--ink); }
+  .doc article h3 { font-size: 1.16rem; margin: 34px 0 0; }
+  .doc article p, .doc article li { font-size: 15.6px; }
+  .doc article p { margin: 14px 0 0; }
+  .doc article ul, .doc article ol { margin: 14px 0 0; padding-left: 22px; }
+  .doc article li { margin: 6px 0; }
+  .doc article strong { font-weight: 600; }
+  .doc article code { background: var(--panel); border: 1px solid var(--rule); padding: 1px 5px; }
+  .doc article hr { display: none; }
+  .doc article blockquote {
+    margin: 20px 0 0; padding: 12px 16px; border-left: 4px solid var(--stamp);
+    background: var(--panel); color: var(--ink-soft); font-size: 15px;
+  }
+  .doc article blockquote p:first-child { margin: 0; }
+  .doc article table { border-collapse: collapse; width: 100%; margin: 18px 0 0; font-size: 14.4px; }
+  .doc article th, .doc article td { border: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
+  .doc article th { background: var(--panel); font-weight: 600; }
+  .table-wrap { overflow-x: auto; }
+
+  .anchor { opacity: 0; margin-left: 8px; font-size: 0.7em; text-decoration: none; color: var(--ink-soft); }
+  h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
+
+  .sheet-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 8px; }
+  .sheet-head p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+  .no-match { display: none; color: var(--ink-soft); font-size: 15px; padding: 30px 0; }
+
+  @media (max-width: 900px) {
+    .doc { grid-template-columns: 1fr; gap: 20px; }
+    .rail { position: static; max-height: none; }
+    .rail nav { max-height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="shell">
+    <a class="wordmark" href="/">BSCH <span>STAFF</span></a>
+    <nav>
+      <a href="/flow.html">Hire flow</a>
+      <a href="/">Public site</a>
+    </nav>
+  </div>
+</header>
+
+<main class="shell doc">
+  <aside class="rail">
+    <label class="visually-hidden" for="filter">Filter sections</label>
+    <input id="filter" type="search" placeholder="Filter sections…" autocomplete="off">
+    <nav id="toc">__TOC__</nav>
+    <p class="count" id="count"></p>
+  </aside>
+
+  <article id="sop">
+    <div class="sheet-head">
+      <span class="stamp">STAFF ONLY</span>
+      <p>Updated __UPDATED__ · straight from the bot's own repo</p>
+    </div>
+    __BODY__
+    <p class="no-match" id="nomatch">Nothing in the SOP matches that.</p>
+  </article>
+</main>
+
+<script>
+const toc = document.getElementById('toc');
+const links = [...toc.querySelectorAll('a')];
+const filter = document.getElementById('filter');
+const count = document.getElementById('count');
+const nomatch = document.getElementById('nomatch');
+
+// Each heading owns everything up to the next heading of the same or higher rank
+function sectionOf(heading) {
+  const stop = heading.tagName === 'H2' ? ['H2'] : ['H2', 'H3'];
+  const nodes = [heading];
+  let el = heading.nextElementSibling;
+  while (el && !stop.includes(el.tagName)) { nodes.push(el); el = el.nextElementSibling; }
+  return nodes;
+}
+
+const sections = links.map(a => {
+  const heading = document.getElementById(a.hash.slice(1));
+  return { link: a, heading, nodes: sectionOf(heading), text: (heading.textContent + ' ' + sectionOf(heading).map(n => n.textContent).join(' ')).toLowerCase() };
+});
+
+filter.addEventListener('input', () => {
+  const q = filter.value.trim().toLowerCase();
+  let shown = 0;
+  for (const s of sections) {
+    const hit = !q || s.text.includes(q);
+    if (hit) shown++;
+    s.link.hidden = !hit;
+    for (const n of s.nodes) n.hidden = !hit;
+  }
+  count.textContent = q ? `${shown} of ${sections.length} sections` : '';
+  nomatch.style.display = q && shown === 0 ? 'block' : 'none';
+});
+
+// Highlight whichever section you're reading
+const seen = new Set();
+const spy = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (e.isIntersecting) seen.add(e.target.id); else seen.delete(e.target.id);
+  }
+  const first = sections.find(s => seen.has(s.heading.id));
+  links.forEach(a => a.classList.remove('here'));
+  if (first) first.link.classList.add('here');
+}, { rootMargin: '-80px 0px -70% 0px' });
+sections.forEach(s => spy.observe(s.heading));
+
+// Copy a link straight to one section
+document.addEventListener('click', async e => {
+  const anchor = e.target.closest('.anchor');
+  if (!anchor) return;
+  e.preventDefault();
+  const url = location.origin + location.pathname + anchor.getAttribute('href');
+  history.replaceState(null, '', anchor.getAttribute('href'));
+  try {
+    await navigator.clipboard.writeText(url);
+    const was = anchor.textContent;
+    anchor.textContent = 'copied';
+    setTimeout(() => { anchor.textContent = was; }, 1200);
+  } catch { location.hash = anchor.getAttribute('href'); }
+});
+</script>
+</body>
+</html>
