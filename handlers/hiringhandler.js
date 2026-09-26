@@ -15,6 +15,9 @@ const {
 } = require("discord.js");
 
 const store = require("../hire/store");
+const referrals = require("./referralhandler");
+const archive = require("./archive");
+const { renderEntry } = require("./extrainfohandler");
 
 module.exports = {
     async handle(interaction, client, config) {
@@ -41,14 +44,26 @@ module.exports = {
             return claimCase(interaction, client, config);
         }
 
-        // Client clicked Accept on the contract
-        if (interaction.isButton() && interaction.customId === "hire_contract_accept") {
-            return acceptContract(interaction, client, config);
+        // Client clicked one of the two Accept buttons on the contract.
+        // Accepting also answers the template bank question (contract section 5).
+        if (interaction.isButton() && interaction.customId === "hire_contract_accept_copy") {
+            return acceptContract(interaction, client, config, "yes");
+        }
+        if (interaction.isButton() && interaction.customId === "hire_contract_accept_nocopy") {
+            return acceptContract(interaction, client, config, "no");
         }
 
         // Client clicked Decline on the contract -> ask them why
         if (interaction.isButton() && interaction.customId === "hire_contract_decline") {
             return openDeclineModal(interaction);
+        }
+
+        // Optional voice channel for the build
+        if (interaction.isButton() && interaction.customId === "hire_vc_yes") {
+            return createTempVC(interaction, client, config);
+        }
+        if (interaction.isButton() && interaction.customId === "hire_vc_no") {
+            return skipTempVC(interaction, client, config);
         }
 
         // Client submitted the decline reason
@@ -318,7 +333,10 @@ async function createHireTicket(interaction, client, config) {
         components: [row],
     });
 
-    // 7) Save the channel + forum + embed-message ids back onto the case
+    // 7) Ask a first-time client how they found us (once per person)
+    await referrals.askIfNew(channel, user.id, "hire");
+
+    // 8) Save the channel + forum + embed-message ids back onto the case
     store.updateCase(record.ticketId, {
         channelId: channel.id,
         forumThreadId: forumThread ? forumThread.id : null,
@@ -403,17 +421,19 @@ function buildCaseEmbed(record, historyText) {
     if (record.templateBank) {
         const t = record.templateBank;
         let tb;
-        if (t.leadDecision === "no") tb = "Lead declined — not added to the template bank.";
-        else if (t.leadDecision === "yes" && t.clientConsent === "no") tb = "Lead said yes, client declined — not copied.";
-        else if (t.copiedConfirmed) tb = "✅ Copied into the template bank (Lead + client agreed).";
-        else if (t.clientConsent === "yes") tb = "Lead + client agreed — awaiting copy by a Builder.";
+        if (t.copiedConfirmed) tb = "✅ Copied into the template bank (Lead + client agreed).";
+        else if (t.clientConsent === "no") tb = "Client said no on the contract — will not be copied.";
+        else if (t.leadDecision === "no") tb = "Lead declined — not added to the template bank.";
+        else if (t.leadDecision === "yes" && t.clientConsent === "yes") tb = "Lead + client agreed — awaiting copy by a Builder.";
+        else if (t.clientConsent === "yes") tb = "Client agreed on the contract — Lead decides after paperwork.";
         else tb = "Awaiting decision.";
         fields.push({ name: "Template Bank", value: tb });
     }
 
-    // Each Extra Info entry becomes its own numbered field (SOP: #1, #2, ...)
+    // Each Extra Info entry becomes its own numbered field (SOP: #1, #2, ...).
+    // Numbers never shift: a removed entry stays, struck through.
     (record.extraInfo || []).forEach((entry, idx) => {
-        fields.push({ name: `Extra Info #${idx + 1}`, value: entry });
+        fields.push({ name: `Extra Info #${idx + 1}`, value: renderEntry(entry) });
     });
 
     return {
@@ -517,8 +537,8 @@ async function updateCaseViews(guild, record) {
 //  embed + these buttons and snapshots the contract text onto the case.)
 // ------------------------------------------------------------------
 
-// Client clicked "Accept"
-async function acceptContract(interaction, client, config) {
+// Client clicked one of the Accept buttons. copyConsent is "yes" or "no".
+async function acceptContract(interaction, client, config, copyConsent) {
     const record = store.getCaseByChannel(interaction.channel.id);
     if (!record) {
         return interaction.reply({ content: "❌ This isn't a valid hire case channel.", flags: 64 });
@@ -541,6 +561,7 @@ async function acceptContract(interaction, client, config) {
     const updated = store.updateCase(record.ticketId, {
         status: "contract-accepted",
         contract: { ...record.contract, acceptedAt: new Date().toISOString(), declinedAt: null, declineReason: null },
+        templateBank: { ...(record.templateBank || {}), clientConsent: copyConsent, consentGivenAt: new Date().toISOString() },
     });
 
     await updateCaseViews(interaction.guild, updated);
@@ -548,8 +569,76 @@ async function acceptContract(interaction, client, config) {
     await interaction.message.edit({ components: [] });
 
     await interaction.channel.send(
-        `✅ <@${interaction.user.id}> **accepted** the contract. The build can begin.`
+        `✅ <@${interaction.user.id}> **accepted** the contract. The build can begin.\n` +
+        (copyConsent === "yes"
+            ? "🗃️ They agreed we may save a copy of the build to the template bank."
+            : "🗃️ They asked us **not** to reuse their build, so it won't be copied.")
     );
+
+    await promptTempVC(interaction.channel, updated);
+}
+
+// ------------------------------------------------------------------
+// Optional voice channel for the build, sitting under the ticket
+// ------------------------------------------------------------------
+async function promptTempVC(channel, record) {
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("hire_vc_yes").setLabel("🎙️ Yes, add a voice channel").setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId("hire_vc_no").setLabel("No thanks").setStyle(ButtonStyle.Secondary),
+    );
+    await channel.send({
+        content: `<@${record.clientId}>${record.lead ? ` <@${record.lead}>` : ""}`,
+        embeds: [{
+            title: "🎙️ Want a voice channel?",
+            color: 0x3498db,
+            description: "Some builds go quicker on voice. I can add a private voice channel under this ticket for the people on this case. It disappears when the ticket closes.",
+        }],
+        components: [row],
+    });
+}
+
+async function createTempVC(interaction, client, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+
+    const allowed = interaction.user.id === record.clientId || isLeadOrSenior(interaction.member, record, config);
+    if (!allowed) return interaction.reply({ content: "❌ Only the client or the Lead can answer this.", flags: 64 });
+
+    if (record.voiceChannelId) {
+        return interaction.reply({ content: `❌ This case already has a voice channel: <#${record.voiceChannelId}>.`, flags: 64 });
+    }
+
+    await interaction.deferUpdate();
+    await interaction.message.edit({ components: [] }).catch(() => {});
+
+    const ticket = interaction.channel;
+    const vc = await interaction.guild.channels.create({
+        name: `hire-vc-${record.ticketId}`,
+        type: ChannelType.GuildVoice,
+        parent: ticket.parentId || undefined,
+        position: ticket.rawPosition + 1,
+        permissionOverwrites: ticket.permissionOverwrites.cache.map(o => ({
+            id: o.id, type: o.type, allow: o.allow, deny: o.deny,
+        })),
+    }).catch(err => { console.error("Could not create the case voice channel:", err.message); return null; });
+
+    if (!vc) {
+        return interaction.channel.send("⚠️ I couldn't make the voice channel. Check that I have **Manage Channels**.");
+    }
+
+    store.updateCase(record.ticketId, { voiceChannelId: vc.id });
+    await interaction.channel.send(`🎙️ Voice channel ready: ${vc}. It's deleted when this case closes.`);
+}
+
+async function skipTempVC(interaction, client, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+    const allowed = interaction.user.id === record.clientId || isLeadOrSenior(interaction.member, record, config);
+    if (!allowed) return interaction.reply({ content: "❌ Only the client or the Lead can answer this.", flags: 64 });
+
+    await interaction.deferUpdate();
+    await interaction.message.edit({ components: [] }).catch(() => {});
+    await interaction.channel.send("👍 No voice channel. The Lead can still add one later by asking Senior Staff.");
 }
 
 // Client clicked "Decline" -> pop a short reason modal
@@ -751,7 +840,18 @@ async function templateLeadYes(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
     await interaction.message.edit({ components: [] });
 
-    // Now ask the client
+    // The client already answered this when they accepted the contract
+    if (updated.templateBank.clientConsent === "yes") {
+        return sendCopyPing(interaction.channel, updated, config);
+    }
+    if (updated.templateBank.clientConsent === "no") {
+        return interaction.channel.send(
+            "🗃️ The client asked us not to reuse their build when they accepted the contract, so nothing is copied. " +
+            "The Lead can run `/copyphasedone` to move to closing."
+        );
+    }
+
+    // No answer on file (a case from before the contract asked): ask them now
     const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder().setCustomId("hire_consent_yes").setLabel("Yes, you may reuse it").setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId("hire_consent_no").setLabel("No, please don't").setStyle(ButtonStyle.Secondary),
@@ -799,11 +899,16 @@ async function templateClientYes(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
     await interaction.message.edit({ components: [] });
 
+    await sendCopyPing(interaction.channel, updated, config);
+}
+
+// Ask a Builder to run /copyserver in the client's server.
+async function sendCopyPing(channel, record, config) {
     // In a drill, the trainee does the copy step; don't ping the real Builders
     const builderMention = record.drill
         ? `<@${record.traineeId}>`
         : config.roles.builder ? `<@&${config.roles.builder}>` : "Builders";
-    await interaction.channel.send(
+    await channel.send(
         `✅ The client agreed! ${builderMention} — please run \`/copyserver\` **inside the client's server** to save the layout into the template bank, ` +
         `then come back here and run \`/copyphasedone\`.`
     );
@@ -915,6 +1020,9 @@ async function closeCaseChannel(guild, record, closedById, reason, config) {
     });
     await updateCaseViews(guild, updated);
 
+    // The case's voice channel goes away with the case, drills included
+    await deleteCaseVoice(guild, record);
+
     // Drill cases: keep the channel so the Head can grade it with /drillend
     if (record.drill) {
         const ch = await guild.channels.fetch(record.channelId).catch(() => null);
@@ -986,8 +1094,9 @@ async function closeCaseChannel(guild, record, closedById, reason, config) {
         }
     }
 
+    // Closed cases go to the archive category, not straight to the bin
     if (channel) {
-        setTimeout(() => channel.delete().catch(() => {}), 4000);
+        await archive.archiveChannel(guild, channel, config, closedById);
     }
     return updated;
 }
@@ -999,6 +1108,15 @@ module.exports.closeCaseChannel = closeCaseChannel;
 module.exports.isSenior = isSenior;
 module.exports.isLeadOrSenior = isLeadOrSenior;
 module.exports.isCaseBuilder = isCaseBuilder;
+
+// Remove a case's voice channel, if it asked for one. Safe to call twice.
+async function deleteCaseVoice(guild, record) {
+    if (!record || !record.voiceChannelId) return;
+    const vc = await guild.channels.fetch(record.voiceChannelId).catch(() => null);
+    if (vc) await vc.delete("Hire case closed").catch(() => {});
+    store.updateCase(record.ticketId, { voiceChannelId: null });
+}
+module.exports.deleteCaseVoice = deleteCaseVoice;
 
 // /copyserver and /pasteserver run inside a CLIENT's server, where nobody has
 // BSCH roles. Look the user up in the main BSCH server instead. A trainee with

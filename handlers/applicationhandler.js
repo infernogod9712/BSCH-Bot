@@ -6,6 +6,7 @@ const {
   ChannelType,
   AttachmentBuilder,
 } = require('discord.js');
+const referrals = require('./referralhandler');
 const store = require('../onboarding/store');
 const { buildQuestions } = require('../onboarding/questions');
 const { isSenior } = require('./hiringhandler');
@@ -98,6 +99,7 @@ async function startApplication(interaction, client, config, choice) {
     }],
   });
   await channel.send({ content: `**Question 1 of ${questions.length}:**\n${questions[0]}` });
+  await referrals.askIfNew(channel, user.id, 'application');
 
   return interaction.editReply({ content: `✅ Your application has started: ${channel}` });
 }

@@ -5,6 +5,7 @@ const {
     ButtonStyle,
 } = require("discord.js");
 const store = require("../hire/store");
+const contract = require("../contract");
 const { updateCaseViews } = require("../handlers/hiringhandler");
 
 function seniorIdsOf(config) {
@@ -37,11 +38,10 @@ module.exports = {
 
         // SOP Step 4: snapshot the CURRENT contract text onto the case at send time,
         // so the client's agreement is tied to exactly what they saw.
-        const contractText = (config.contract && config.contract.currentText) || "No contract text configured.";
-
         store.updateCase(record.ticketId, {
             contract: {
-                text: contractText,
+                text: contract.TEXT,
+                version: contract.VERSION,
                 sentAt: new Date().toISOString(),
                 acceptedAt: null,
                 declinedAt: null,
@@ -49,20 +49,26 @@ module.exports = {
             },
         });
 
-        const embed = {
-            title: "📜 BSCH Hiring Contract",
+        const parts = contract.chunks();
+        const embeds = parts.map((text, i) => ({
+            title: i === 0 ? "📜 BSCH Hiring Contract" : undefined,
             color: 0xf1c40f,
-            description:
-                `<@${record.clientId}>, please review the contract below.\n\n${contractText}`,
-            footer: { text: `Case #${record.ticketId} — this is the exact contract snapshotted to your case.` },
-            timestamp: new Date().toISOString(),
-        };
+            description: text,
+            footer: i === parts.length - 1
+                ? { text: `Case #${record.ticketId} — contract ${contract.VERSION}, snapshotted to your case.` }
+                : undefined,
+        }));
 
+        // Accepting also answers the template bank question (section 5)
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
-                .setCustomId("hire_contract_accept")
-                .setLabel("✅ Accept")
+                .setCustomId("hire_contract_accept_copy")
+                .setLabel("✅ Accept — you may reuse my build")
                 .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId("hire_contract_accept_nocopy")
+                .setLabel("✅ Accept — don't reuse my build")
+                .setStyle(ButtonStyle.Primary),
             new ButtonBuilder()
                 .setCustomId("hire_contract_decline")
                 .setLabel("❌ Decline")
@@ -70,8 +76,8 @@ module.exports = {
         );
 
         await interaction.channel.send({
-            content: `<@${record.clientId}>`,
-            embeds: [embed],
+            content: `<@${record.clientId}>, please read the contract below and pick one of the buttons.`,
+            embeds,
             components: [row],
         });
 

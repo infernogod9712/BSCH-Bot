@@ -15,7 +15,9 @@ module.exports = {
         .addAttachmentOption(o =>
             o.setName("image2").setDescription("Another screenshot").setRequired(false))
         .addAttachmentOption(o =>
-            o.setName("image3").setDescription("Another screenshot").setRequired(false)),
+            o.setName("image3").setDescription("Another screenshot").setRequired(false))
+        .addBooleanOption(o =>
+            o.setName("showcase").setDescription("Also post these photos in the showcase channel?").setRequired(false)),
 
     async execute(interaction, client, config) {
         const record = store.getCaseByChannel(interaction.channel.id);
@@ -33,11 +35,33 @@ module.exports = {
             .filter(Boolean)
             .map(a => a.url);
 
+        const showcase = interaction.options.getBoolean("showcase") || false;
+
         const updated = store.updateCase(record.ticketId, {
-            paperwork: { serverName, notes, images, filedAt: new Date().toISOString() },
+            paperwork: { serverName, notes, images, showcase, filedAt: new Date().toISOString() },
             status: "paperwork-filed",
         });
         await updateCaseViews(interaction.guild, updated);
+
+        // Showcase the build, but only if the Builder said yes and sent photos.
+        // Practice builds from a drill never reach the showcase channel.
+        let showcased = false;
+        if (showcase && images.length && !record.drill) {
+            const channel = interaction.guild.channels.cache.get(config.channels.showcaseChannel);
+            if (channel) {
+                const credits = (updated.roster || []).map(id => `<@${id}>`).join(", ") || `<@${interaction.user.id}>`;
+                const sent = await channel.send({
+                    embeds: images.map((url, i) => (i === 0 ? {
+                        title: `🏗️ ${serverName}`,
+                        description: `Built by ${credits}`,
+                        color: 0x2ecc71,
+                        image: { url },
+                        timestamp: new Date().toISOString(),
+                    } : { color: 0x2ecc71, image: { url } })),
+                }).catch(() => null);
+                showcased = Boolean(sent);
+            }
+        }
 
         // Post the paperwork (with images) into the ticket for the record
         await interaction.reply({
@@ -48,6 +72,10 @@ module.exports = {
                     { name: "Server Name", value: serverName },
                     ...(notes ? [{ name: "Notes", value: notes }] : []),
                     { name: "Images", value: images.length ? `${images.length} attached` : "None" },
+                    { name: "Showcase", value: showcased ? "✅ Posted to the showcase channel"
+                        : record.drill ? "Drill build — never showcased"
+                        : showcase ? "⚠️ Couldn't post (no photos, or no showcase channel set)"
+                        : "Not showcased" },
                 ],
                 image: images.length ? { url: images[0] } : undefined,
                 timestamp: new Date().toISOString(),

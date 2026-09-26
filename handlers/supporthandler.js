@@ -8,14 +8,17 @@ const {
     TextInputStyle,
     AttachmentBuilder
 } = require("discord.js");
+const referrals = require("./referralhandler");
+const archive = require("./archive");
 
 // The three support ticket types.
 //  name  = shown to users (embed title, "Type" field)
 //  slug  = used in the channel name  ->  {slug}-{client}
+// Each type opens in its own category (set with /config).
 const TICKET_TYPES = {
-    ticket_support: { name: "General Support", slug: "general" },
-    ticket_help:    { name: "Server Building Advice", slug: "buildhelp" },
-    ticket_bug:     { name: "Bug Report", slug: "bugreport" }
+    ticket_support: { name: "General Support", slug: "general", category: "generalTickets" },
+    ticket_help:    { name: "Server Building Advice", slug: "buildhelp", category: "buildHelpTickets" },
+    ticket_bug:     { name: "Bug Report", slug: "bugreport", category: "bugTickets" }
 };
 
 module.exports = {
@@ -98,7 +101,7 @@ async function createTicket(interaction, config) {
     const channel = await guild.channels.create({
         name: `${type.slug}-${user.username}`.toLowerCase().replace(/[^a-z0-9\-]/g, ""),
         type: 0, // GuildText
-        parent: config.categories.supportTickets,
+        parent: config.categories[type.category] || undefined,
         topic: `Ticket for ${user.id}`,
         permissionOverwrites: [
             {
@@ -149,6 +152,8 @@ async function createTicket(interaction, config) {
         ],
         components: [row]
     });
+
+    await referrals.askIfNew(channel, user.id, "support");
 
     return interaction.editReply({
         content: `✅ Your ticket has been created: ${channel}.`
@@ -207,8 +212,8 @@ async function closeTicket(interaction, config) {
     }
 
     await interaction.editReply({
-        content: "🔒 Ticket closed. Transcript saved. Deleting channel in a moment..."
+        content: "🔒 Ticket closed. Transcript saved. Moving it to the archive..."
     });
 
-    setTimeout(() => channel.delete().catch(() => {}), 3000);
+    await archive.archiveChannel(interaction.guild, channel, config, interaction.user.id);
 }

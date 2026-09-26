@@ -4,6 +4,7 @@
 
 const store = require('./store');
 const hireStore = require('../hire/store');
+const { deleteCaseVoice } = require('../handlers/hiringhandler');
 
 // result: 'pass' | 'fail'. endedById is null when the bot ends it on a timer.
 async function endDrill(guild, drill, result, reason, endedById, config) {
@@ -12,12 +13,15 @@ async function endDrill(guild, drill, result, reason, endedById, config) {
   const deptRole = drill.department === 'mod' ? config.roles.moderator : config.roles.builder;
   const days = config.timers.drillFailCooldownDays || 7;
 
-  // Builder drills: close the practice hire case too
+  // Builder drills: close the practice hire case and clear up after it
   const drillCase = hireStore.getCaseByChannel(drill.channelId);
-  if (drillCase && drillCase.drill && drillCase.status !== 'closed') {
-    hireStore.updateCase(drillCase.ticketId, {
-      status: 'closed', closedAt: new Date().toISOString(), closedBy: endedById, closeReason: `drill-${result}`,
-    });
+  if (drillCase && drillCase.drill) {
+    await deleteCaseVoice(guild, drillCase);
+    if (drillCase.status !== 'closed') {
+      hireStore.updateCase(drillCase.ticketId, {
+        status: 'closed', closedAt: new Date().toISOString(), closedBy: endedById, closeReason: `drill-${result}`,
+      });
+    }
   }
 
   if (result === 'pass') {
