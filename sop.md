@@ -114,7 +114,7 @@ Either Accept posts "Contract Accepted" in the ticket, logs the timestamp to bot
 
 ### Step 5 - Server Access & Build Start
 
-After acceptance, the client grants BSCH's assigned Builder(s) admin access directly in their own server. Because the bot has no visibility into permission changes on a server it isn't managing, this step is confirmed manually: the Builder runs `/admingranted` once access has actually been granted. This single command serves two purposes at once - it logs the access-granted timestamp to both the ticket and case file, and it marks the build as started. There is no separate "start build" command.
+After acceptance, the client grants BSCH's assigned Builder(s) admin access directly in their own server. Because the bot has no visibility into permission changes on a server it isn't managing, this step is confirmed manually. The Builder runs `/admingrant`, and the bot posts instructions for the client: make a role, give it **Administrator**, drag it to the **very top** of their role list, and hand it to the builders named on the case. The message carries a **Finished** button that only a Builder on the case can press, and only once they can actually see the access. Pressing it logs the access-granted timestamp to both the ticket and case file and marks the build as started. There is no separate "start build" command.
 
 ### Step 6 - Build Finish & Rating
 
@@ -157,7 +157,7 @@ Nothing about this service requires payment at any stage; the donation link is o
 | `!inject [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
 | `!sub [number] [text]` | Builder on the case | Rewords that Extra Info entry. With no text, removes it (struck through, number kept). |
 | `/contract` | Lead | Sends the hiring contract with two Accept buttons (reuse allowed or not) and Decline; snapshots the text and version into the case. |
-| `/admingranted` | Builder on the case | Confirms server access was granted; also marks the build as started. |
+| `/admingrant` | Builder on the case | Posts the access instructions for the client, with a Finished button that confirms access and starts the build. |
 | `/buildfinished` | Lead | Marks the build complete; triggers the client rating/review ping. |
 | `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters, and optionally posts the photos to the showcase channel. |
 | `/copyphasedone` | Lead, or the Builder who performed the copy | Closes out the template-bank decision (and confirms the copy is done, if applicable); triggers the final close-out embed. |

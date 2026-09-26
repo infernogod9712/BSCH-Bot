@@ -58,6 +58,11 @@ module.exports = {
             return openDeclineModal(interaction);
         }
 
+        // Lead confirming the client actually granted admin access
+        if (interaction.isButton() && interaction.customId === "hire_admin_done") {
+            return confirmAdminAccess(interaction, client, config);
+        }
+
         // Optional voice channel for the build
         if (interaction.isButton() && interaction.customId === "hire_vc_yes") {
             return createTempVC(interaction, client, config);
@@ -576,6 +581,37 @@ async function acceptContract(interaction, client, config, copyConsent) {
     );
 
     await promptTempVC(interaction.channel, updated);
+}
+
+// ------------------------------------------------------------------
+// Step 5 — the Lead confirms access, which starts the build
+// (/admingrant posts the instructions and this button.)
+// ------------------------------------------------------------------
+async function confirmAdminAccess(interaction, client, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+
+    if (!isCaseBuilder(interaction.member, record, config)) {
+        return interaction.reply({ content: "❌ Only Builders on the case can confirm access.", flags: 64 });
+    }
+    if (record.adminGrantedAt) {
+        return interaction.reply({ content: "❌ Server access is already logged as granted.", flags: 64 });
+    }
+
+    await interaction.deferUpdate();
+    await interaction.message.edit({ components: [] }).catch(() => {});
+
+    const now = new Date().toISOString();
+    const updated = store.updateCase(record.ticketId, {
+        adminGrantedAt: now,
+        buildStartedAt: now,
+        status: "build-started",
+    });
+    await updateCaseViews(interaction.guild, updated);
+
+    await interaction.channel.send(
+        `🔑 <@${interaction.user.id}> confirmed access. The build is now **started**. Good luck!`
+    );
 }
 
 // ------------------------------------------------------------------
