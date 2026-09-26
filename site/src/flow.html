@@ -5,43 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How a BSCH build runs</title>
 <meta name="description" content="Every step of a BSCH hire case, from opening a ticket to closing it, including what happens when something goes wrong.">
+<link rel="icon" href="/logo-64.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="/base.css">
 <style>
-  .page { padding: 44px 0 10px; }
-  .page h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); }
-  .page p.lede { color: var(--ink-soft); max-width: 60ch; margin: 16px 0 0; }
+  .page { padding: 52px 0 70px; }
+  .page h1 { font-size: clamp(2.2rem, 5.4vw, 3.6rem); }
+  .page p.lede { color: var(--dim); max-width: 62ch; margin: 18px 0 0; font-size: 1.08rem; }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-size: 13.5px; margin: 26px 0 16px; }
-  .key { display: inline-flex; align-items: center; gap: 8px; }
-  .sw { width: 22px; height: 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 24px; align-items: center; font-size: 14px; margin: 30px 0 18px; color: var(--dim); }
+  .key { display: inline-flex; align-items: center; gap: 9px; }
+  .sw { width: 22px; height: 13px; border-radius: 2px; }
   .sw.term { border-radius: 7px; }
-  .sw.dec { width: 24px; height: 14px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: var(--ink); }
-  .ln { width: 26px; height: 3px; }
+  .sw.dec { width: 22px; height: 14px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: #b9cdf2; }
+  .ln { width: 26px; height: 3px; border-radius: 2px; }
 
-  .scroller { overflow-x: auto; border: 1px solid var(--rule); background: #fbfbf8; }
+  .scroller { overflow-x: auto; border: 1px solid var(--line); background: #08152f; }
   svg { display: block; }
-  .node div {
-    height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;
-    font: 500 12.5px/1.35 "IBM Plex Sans", system-ui, sans-serif; padding: 6px 12px; box-sizing: border-box;
+
+  /* label styles used inside the chart's foreignObjects */
+  .label, .measure {
+    font: 500 13px/1.35 Barlow, system-ui, sans-serif;
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; height: 100%;
   }
-  .node b { font-weight: 700; margin-right: 4px; opacity: .8; }
-  .node code { font: 500 12px "IBM Plex Mono", ui-monospace, Consolas, monospace; background: rgba(255,255,255,.16); padding: 0 3px; border-radius: 2px; }
-  .node.dec code, .node.term code { background: rgba(0,0,0,.08); }
-  .lbl { font: 700 12px "IBM Plex Sans", system-ui, sans-serif; paint-order: stroke; stroke: #fbfbf8; stroke-width: 5px; stroke-linejoin: round; }
+  .measure { position: absolute; visibility: hidden; height: auto; display: block; left: -9999px; top: 0; }
+  /* one flex item, so <b> and <code> stay inline instead of becoming columns */
+  .label > span, .measure > span { display: block; }
+  .label code, .measure code {
+    font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    font-size: 0.88em; background: rgba(255,255,255,.16); padding: 1px 4px; border-radius: 3px; white-space: nowrap;
+  }
+  .label b, .measure b { font-weight: 700; }
+  .node.dec .label { color: #eaf1ff; }
+  text.step { font: 700 11px "IBM Plex Mono", monospace; }
+  text.edge-label { font: 600 12px Barlow, sans-serif; }
+
+  @media (max-width: 720px) { .legend { font-size: 13px; gap: 8px 16px; } }
 </style>
 </head>
 <body>
 
-<header class="masthead">
+<header class="top">
   <div class="shell">
-    <a class="wordmark" href="/">BSCH <span>EST. 2026</span></a>
+    <a class="mark" href="/"><img src="/logo-64.png" alt="" width="34" height="34"><span>BSCH</span></a>
     <nav>
-      <a href="/flow.html" aria-current="page">How a build runs</a>
-      <a href="/#staff">Join the team</a>
-      <a href="/#hire">Hire us</a>
+      <a href="/#work">What you get</a>
+      <a href="/#how">How it works</a>
+      <a href="/flow.html" aria-current="page">Full process</a>
+      <a class="hire" href="__DISCORD__">Hire us</a>
     </nav>
   </div>
 </header>
@@ -49,17 +64,17 @@
 <main class="page">
   <div class="shell">
     <h1>How a build runs</h1>
-    <p class="lede">Every step of a hire case, from the ticket opening to the moment it's archived. Squares are things that happen, diamonds are decisions, and the rounded ends are where a case starts and stops. Scroll sideways on a phone.</p>
+    <p class="lede">Every step of a hire case, from the ticket opening to the moment it's archived. Boxes are things that happen, diamonds are decisions, and the rounded ends are where a case starts and stops. Drag sideways to see the branches.</p>
 
     <div class="legend">
-      <span class="key"><span class="sw" style="background:#1f5fbf"></span>Bot</span>
-      <span class="key"><span class="sw" style="background:#17553a"></span>Client</span>
-      <span class="key"><span class="sw" style="background:#6a3d9e"></span>Staff</span>
-      <span class="key"><span class="sw term" style="background:#2fd3b0"></span>Start / end</span>
+      <span class="key"><span class="sw" style="background:#1f57d6"></span>Bot</span>
+      <span class="key"><span class="sw" style="background:#17806a"></span>Client</span>
+      <span class="key"><span class="sw" style="background:#6d43c8"></span>Staff</span>
+      <span class="key"><span class="sw term" style="background:#0f8f77"></span>Start / end</span>
       <span class="key"><span class="sw dec"></span>Decision</span>
-      <span class="key"><span class="ln" style="background:#1f9d4a"></span>Yes</span>
-      <span class="key"><span class="ln" style="background:#d0342c"></span>No</span>
-      <span class="key"><span class="ln" style="background:#e3a900"></span>Loop as needed</span>
+      <span class="key"><span class="ln" style="background:#4ade80"></span>Yes</span>
+      <span class="key"><span class="ln" style="background:#f87171"></span>No</span>
+      <span class="key"><span class="ln" style="background:#fbbf24"></span>Repeats</span>
     </div>
 
     <div class="scroller"><svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg></div>
@@ -70,7 +85,7 @@
   <div class="shell">
     <span>BSCH — Beanz's Server Creating Helpers</span>
     <a href="/">Home</a>
-    <span style="margin-left:auto">Staff: the written procedure lives in the SOP.</span>
+    <span style="margin-left:auto">Staff: the written procedure is in the SOP.</span>
   </div>
 </footer>
 

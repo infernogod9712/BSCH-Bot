@@ -1,140 +1,91 @@
-/* BSCH site — shared styles.
-   Cold institutional document: SCP paperwork, not a SaaS landing page. */
+/* BSCH site — shared shell.
+   Blueprint: deep navy ground, drafting blue, white line work, taken from the
+   logo. Every page uses this header, so they can't drift apart. */
 
 :root {
-  --ink: #14181d;
-  --ink-soft: #4a545f;
-  --paper: #edeff2;
-  --panel: #ffffff;
-  --rule: #c7cdd6;
-  --stamp: #a81f1a;
-  --link: #1d4e74;
-  --shell: 1120px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ink: #e7ebf1;
-    --ink-soft: #99a3af;
-    --paper: #101419;
-    --panel: #171c23;
-    --rule: #2b323b;
-    --stamp: #e06a63;
-    --link: #77b4e0;
-  }
+  --void: #061029;
+  --deep: #0b1b3e;
+  --panel: #0e2350;
+  --line: #1d3568;
+  --blue: #2f6bff;
+  --blue-soft: #7aa5ff;
+  --text: #eaf1ff;
+  --dim: #9db1d8;
+  --go: #4ade80;
+  --stop: #f87171;
+  --shell: 1180px;
 }
 
 * { box-sizing: border-box; }
-
-html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font: 400 16px/1.65 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--void);
+  color: var(--text);
+  font: 400 17px/1.6 Barlow, system-ui, -apple-system, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-h1, h2, h3, h4 {
-  font-family: "IBM Plex Serif", Georgia, "Times New Roman", serif;
-  font-weight: 600;
-  line-height: 1.2;
-  text-wrap: balance;
+h1, h2, h3 {
+  font-family: "Archivo Black", Impact, system-ui, sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
   margin: 0;
 }
 
-a { color: var(--link); text-underline-offset: 3px; }
-a:focus-visible, button:focus-visible, input:focus-visible {
-  outline: 2px solid var(--stamp);
-  outline-offset: 2px;
-}
-
-code, .mono {
-  font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace;
-  font-size: 0.92em;
-}
+a { color: var(--blue-soft); }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+code, .mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; font-size: 0.9em; }
 
 .shell { width: min(var(--shell), 100% - 40px); margin-inline: auto; }
 
-/* ---- site header ---- */
-.masthead {
-  border-bottom: 1px solid var(--rule);
-  background: var(--panel);
+/* ---- the one header every page uses ---- */
+.top {
   position: sticky;
   top: env(safe-area-inset-top, 0px);
-  z-index: 20;
+  z-index: 30;
+  background: rgba(6, 16, 41, .88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
 }
-.masthead .shell {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  min-height: 62px;
-  flex-wrap: wrap;
+.top .shell { display: flex; align-items: center; gap: 26px; min-height: 66px; }
+.mark { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
+.mark img { width: 34px; height: 34px; display: block; }
+.mark span { font-family: "Archivo Black", Impact, sans-serif; font-size: 21px; letter-spacing: -0.02em; }
+.top nav { margin-left: auto; display: flex; align-items: center; gap: 24px; font-weight: 600; font-size: 15px; }
+.top nav a { color: var(--dim); text-decoration: none; }
+.top nav a:hover { color: var(--text); }
+.top nav a[aria-current="page"] { color: var(--text); box-shadow: inset 0 -2px 0 var(--blue); }
+.top nav a.hire {
+  background: var(--blue); color: #fff; padding: 10px 18px; font-weight: 700;
+  box-shadow: none; border: 2px solid var(--blue);
 }
-.wordmark {
-  font-family: "IBM Plex Serif", Georgia, serif;
-  font-weight: 600;
-  font-size: 19px;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-  text-decoration: none;
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-}
-.wordmark span {
-  font: 500 11px/1 "IBM Plex Mono", monospace;
-  color: var(--ink-soft);
-  border: 1px solid var(--rule);
-  padding: 3px 5px;
-}
-.masthead nav { margin-left: auto; display: flex; gap: 22px; font-size: 14.5px; }
-.masthead nav a { color: var(--ink-soft); text-decoration: none; }
-.masthead nav a:hover, .masthead nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; }
+.top nav a.hire:hover { background: transparent; color: var(--text); }
 
-/* ---- buttons ---- */
-.btn {
-  display: inline-block;
-  background: var(--ink);
-  color: var(--paper);
-  padding: 12px 22px;
-  font-weight: 600;
-  font-size: 15px;
-  text-decoration: none;
-  border: 1px solid var(--ink);
-}
-.btn:hover { background: transparent; color: var(--ink); }
-.btn.ghost { background: transparent; color: var(--ink); }
-.btn.ghost:hover { background: var(--ink); color: var(--paper); }
-
-/* ---- classification stamp ---- */
-.stamp {
-  display: inline-block;
-  border: 2px solid var(--stamp);
-  color: var(--stamp);
-  font: 600 11.5px/1 "IBM Plex Mono", monospace;
-  letter-spacing: 0.14em;
-  padding: 6px 9px;
-  transform: rotate(-1.5deg);
+@media (max-width: 720px) {
+  .top .shell { gap: 14px; flex-wrap: wrap; padding-block: 10px; }
+  .top nav { gap: 16px; width: 100%; margin-left: 0; font-size: 14px; }
+  .top nav a.hire { margin-left: auto; padding: 8px 14px; }
 }
 
+/* ---- shared footer ---- */
 footer.site {
-  border-top: 1px solid var(--rule);
-  margin-top: 72px;
-  padding: 28px 0 44px;
-  color: var(--ink-soft);
-  font-size: 14px;
+  border-top: 1px solid var(--line);
+  padding: 34px 0 60px;
+  color: var(--dim);
+  font-size: 14.5px;
 }
-footer.site .shell { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; }
-footer.site a { color: var(--ink-soft); }
+footer.site .shell { display: flex; gap: 20px; flex-wrap: wrap; align-items: center; }
+footer.site a { color: var(--dim); }
 
-/* Text that only screen readers should get */
+/* Text only screen readers should get */
 .visually-hidden {
-  position: absolute;
-  width: 1px; height: 1px;
+  position: absolute; width: 1px; height: 1px;
   margin: -1px; padding: 0; border: 0;
-  clip-path: inset(50%);
-  overflow: hidden; white-space: nowrap;
+  clip-path: inset(50%); overflow: hidden; white-space: nowrap;
 }

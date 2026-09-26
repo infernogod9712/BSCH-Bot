@@ -8,73 +8,83 @@
 <meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="icon" href="/logo-64.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/base.css">
 <style>
-  .doc { display: grid; grid-template-columns: 268px minmax(0, 1fr); gap: 48px; align-items: start; padding: 30px 0 0; }
+  .doc { display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 52px; align-items: start; padding: 34px 0 0; }
 
   /* ---- section rail ---- */
-  .rail { position: sticky; top: calc(78px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 110px); display: flex; flex-direction: column; }
+  .rail { position: sticky; top: calc(84px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 120px); display: flex; flex-direction: column; }
   .rail input {
-    width: 100%; padding: 9px 11px; font: 400 14px "IBM Plex Sans", sans-serif;
-    background: var(--panel); color: var(--ink); border: 1px solid var(--rule);
+    width: 100%; padding: 10px 12px; font: 400 14.5px Barlow, sans-serif;
+    background: var(--deep); color: var(--text); border: 1px solid var(--line);
   }
-  .rail input::placeholder { color: var(--ink-soft); }
+  .rail input::placeholder { color: var(--dim); }
   .rail nav { overflow-y: auto; margin-top: 14px; padding-right: 6px; }
   .rail a {
-    display: block; padding: 5px 0 5px 12px; font-size: 14px; line-height: 1.35;
-    color: var(--ink-soft); text-decoration: none; border-left: 2px solid var(--rule);
+    display: block; padding: 6px 0 6px 13px; font-size: 14px; line-height: 1.35;
+    color: var(--dim); text-decoration: none; border-left: 2px solid var(--line);
   }
-  .rail a.sub { padding-left: 24px; font-size: 13.2px; }
-  .rail a:hover { color: var(--ink); }
-  .rail a.here { color: var(--ink); border-left-color: var(--stamp); font-weight: 600; }
+  .rail a.sub { padding-left: 25px; font-size: 13.2px; }
+  .rail a:hover { color: var(--text); }
+  .rail a.here { color: var(--text); border-left-color: var(--blue); font-weight: 600; }
   .rail a[hidden] { display: none; }
-  .rail .count { margin-top: 10px; font: 400 12.5px "IBM Plex Mono", monospace; color: var(--ink-soft); }
+  .rail .count { margin-top: 10px; font: 400 12.5px "IBM Plex Mono", monospace; color: var(--dim); }
 
   /* ---- document ---- */
-  .doc article { max-width: 74ch; padding-bottom: 80px; }
-  .doc article > h1 { font-size: clamp(1.9rem, 4vw, 2.5rem); }
-  .doc article h2 { font-size: 1.6rem; margin: 52px 0 0; padding-top: 22px; border-top: 2px solid var(--ink); }
-  .doc article h3 { font-size: 1.16rem; margin: 34px 0 0; }
-  .doc article p, .doc article li { font-size: 15.6px; }
+  .doc article { max-width: 76ch; padding-bottom: 90px; }
+  .doc article h1 { font-size: clamp(2rem, 4.4vw, 2.9rem); margin-top: 18px; }
+  .doc article h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem); margin: 58px 0 0; padding-top: 24px;
+    border-top: 2px solid var(--line);
+  }
+  .doc article h3 { font-size: 1.15rem; margin: 36px 0 0; text-transform: none; letter-spacing: -0.01em; }
+  .doc article p, .doc article li { font-size: 16px; color: #dbe6fb; }
   .doc article p { margin: 14px 0 0; }
   .doc article ul, .doc article ol { margin: 14px 0 0; padding-left: 22px; }
-  .doc article li { margin: 6px 0; }
-  .doc article strong { font-weight: 600; }
-  .doc article code { background: var(--panel); border: 1px solid var(--rule); padding: 1px 5px; }
+  .doc article li { margin: 7px 0; }
+  .doc article strong { font-weight: 700; color: var(--text); }
+  .doc article code { background: var(--deep); border: 1px solid var(--line); padding: 1px 6px; color: var(--blue-soft); }
+  .doc article a { color: var(--blue-soft); }
   .doc article hr { display: none; }
   .doc article blockquote {
-    margin: 20px 0 0; padding: 12px 16px; border-left: 4px solid var(--stamp);
-    background: var(--panel); color: var(--ink-soft); font-size: 15px;
+    margin: 22px 0 0; padding: 14px 18px; border-left: 4px solid var(--blue);
+    background: var(--deep); color: var(--dim); font-size: 15.4px;
   }
   .doc article blockquote p:first-child { margin: 0; }
-  .doc article table { border-collapse: collapse; width: 100%; margin: 18px 0 0; font-size: 14.4px; }
-  .doc article th, .doc article td { border: 1px solid var(--rule); padding: 8px 10px; text-align: left; vertical-align: top; }
-  .doc article th { background: var(--panel); font-weight: 600; }
+  .doc article table { border-collapse: collapse; width: 100%; margin: 20px 0 0; font-size: 14.6px; }
+  .doc article th, .doc article td { border: 1px solid var(--line); padding: 9px 11px; text-align: left; vertical-align: top; }
+  .doc article th { background: var(--deep); font-weight: 700; }
   .table-wrap { overflow-x: auto; }
 
-  .anchor { opacity: 0; margin-left: 8px; font-size: 0.7em; text-decoration: none; color: var(--ink-soft); }
+  .anchor { opacity: 0; margin-left: 9px; font-size: 0.62em; text-decoration: none; color: var(--dim); }
   h2:hover .anchor, h3:hover .anchor, .anchor:focus-visible { opacity: 1; }
 
-  .sheet-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 8px; }
-  .sheet-head p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
-  .no-match { display: none; color: var(--ink-soft); font-size: 15px; padding: 30px 0; }
+  .sheet-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .sheet-head p { margin: 0; color: var(--dim); font-size: 14.5px; }
+  .stamp {
+    border: 2px solid var(--blue); color: var(--blue-soft);
+    font: 500 11.5px/1 "IBM Plex Mono", monospace; letter-spacing: .16em; padding: 7px 10px;
+  }
+  .no-match { display: none; color: var(--dim); padding: 30px 0; }
 
   @media (max-width: 900px) {
-    .doc { grid-template-columns: 1fr; gap: 20px; }
+    .doc { grid-template-columns: 1fr; gap: 22px; }
     .rail { position: static; max-height: none; }
-    .rail nav { max-height: 200px; }
+    .rail nav { max-height: 210px; }
   }
 </style>
 </head>
 <body>
 
-<header class="masthead">
+<header class="top">
   <div class="shell">
-    <a class="wordmark" href="/">BSCH <span>STAFF</span></a>
+    <a class="mark" href="/"><img src="/logo-64.png" alt="" width="34" height="34"><span>BSCH</span></a>
     <nav>
-      <a href="/flow.html">Hire flow</a>
+      <a href="/flow.html">Full process</a>
       <a href="/">Public site</a>
+      <a class="hire" href="__DISCORD__">Hire us</a>
     </nav>
   </div>
 </header>

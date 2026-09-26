@@ -4,78 +4,121 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BSCH — free SCP roleplay server builds</title>
-<meta name="description" content="Beanz's Server Creating Helpers builds SCP roleplay Discord servers for free. Open a ticket, get a builder, keep the server.">
+<meta name="description" content="We build SCP roleplay Discord servers. Free, start to finish, by builders who do this for fun.">
+<link rel="icon" href="/logo-64.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="/base.css">
 <style>
-  /* ---- hero ---- */
-  .hero { padding: 64px 0 56px; }
-  .hero .shell { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: start; }
-  .hero h1 { font-size: clamp(2.3rem, 5.2vw, 3.6rem); letter-spacing: -0.02em; }
-  .hero p.lede { font-size: 1.17rem; color: var(--ink-soft); max-width: 46ch; margin: 20px 0 0; }
-  .hero .actions { display: flex; gap: 14px; margin-top: 30px; flex-wrap: wrap; }
-  .hero .terms { margin-top: 26px; font-size: 14px; color: var(--ink-soft); }
-  .hero .terms b { color: var(--ink); font-weight: 600; }
+  /* blueprint paper: grid, drawn once behind the whole page */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(122,165,255,.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,165,255,.07) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
 
-  /* ---- the case file: BSCH's own artefact, used as the hero image ---- */
-  .file {
-    background: var(--panel);
-    border: 1px solid var(--rule);
-    border-left: 4px solid var(--stamp);
+  /* ---- hero ---- */
+  .hero { position: relative; padding: 92px 0 78px; }
+  .hero::after {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(760px 420px at 74% 22%, rgba(47,107,255,.30), transparent 72%);
   }
-  .file header {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    padding: 13px 18px; border-bottom: 1px solid var(--rule);
-    font: 500 12.5px/1 "IBM Plex Mono", monospace; color: var(--ink-soft);
+  .hero .shell { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 60px; align-items: center; }
+  .kicker { font: 500 13px/1 "IBM Plex Mono", monospace; color: var(--blue-soft); letter-spacing: .2em; margin: 0; }
+  .hero h1 { font-size: clamp(3rem, 8.6vw, 6.6rem); margin: 20px 0 0; letter-spacing: -0.035em; }
+  .hero h1 em { font-style: normal; color: var(--blue-soft); }
+  .hero p.pitch { font-size: clamp(1.05rem, 1.7vw, 1.3rem); color: var(--dim); max-width: 52ch; margin: 24px 0 0; }
+  .hero .row { display: flex; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
+  .hero figure { margin: 0; position: relative; }
+  .hero figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
+  .hero figure figcaption {
+    position: absolute; left: 0; bottom: -30px;
+    font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--dim); letter-spacing: .1em;
   }
-  .file h2 { padding: 18px 18px 0; font-size: 1.25rem; }
-  .file dl { margin: 14px 0 0; padding: 0 18px 18px; display: grid; grid-template-columns: 128px 1fr; gap: 9px 14px; font-size: 14.5px; }
-  .file dt { color: var(--ink-soft); }
-  .file dd { margin: 0; }
-  .file .phase { color: var(--stamp); font-weight: 600; }
-  .file footer { border-top: 1px dashed var(--rule); padding: 12px 18px; font-size: 13.5px; color: var(--ink-soft); }
+
+  .cta {
+    background: var(--blue); color: #fff; text-decoration: none;
+    font: 700 19px/1 Barlow, sans-serif; padding: 20px 34px; display: inline-block;
+    border: 3px solid var(--blue); transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .cta:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--blue-soft); }
+  .cta.quiet { background: transparent; color: var(--text); border-color: var(--line); box-shadow: none; }
+  .cta.quiet:hover { border-color: var(--blue-soft); transform: none; box-shadow: none; }
+
+  /* ---- numbers ---- */
+  .numbers { border-block: 1px solid var(--line); background: rgba(11,27,62,.78); }
+  .numbers .shell { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .numbers div { padding: 32px 14px 32px 0; }
+  .numbers strong {
+    display: block; font-family: "Archivo Black", Impact, sans-serif;
+    font-size: clamp(2.1rem, 4.4vw, 3.2rem); line-height: 1; letter-spacing: -0.03em;
+  }
+  .numbers .free strong { color: var(--blue-soft); }
+  .numbers span { color: var(--dim); font-size: 14.5px; font-weight: 600; }
 
   /* ---- sections ---- */
-  section.band { padding: 54px 0; border-top: 1px solid var(--rule); }
-  section.band h2 { font-size: 1.7rem; }
-  section.band > .shell > p { max-width: 62ch; color: var(--ink-soft); margin: 14px 0 0; }
+  section { padding: 90px 0; }
+  section > .shell > h2 { font-size: clamp(2.1rem, 5.2vw, 3.5rem); }
+  section h2 em { font-style: normal; color: var(--blue-soft); }
+  .lede { color: var(--dim); font-size: 1.12rem; max-width: 58ch; margin: 18px 0 0; }
 
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 34px; margin-top: 34px; counter-reset: step; }
-  .steps li { list-style: none; counter-increment: step; border-top: 2px solid var(--ink); padding-top: 14px; }
-  .steps li::before {
-    content: counter(step, decimal-leading-zero);
-    font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--stamp); display: block; margin-bottom: 8px;
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 46px; background: var(--line); border: 1px solid var(--line); }
+  .grid article { background: var(--void); padding: 30px 26px 34px; }
+  .grid .tag { font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--blue-soft); letter-spacing: .14em; margin: 0; }
+  .grid h3 { font-size: 1.2rem; margin: 14px 0 0; }
+  .grid p { color: var(--dim); font-size: 15.6px; margin: 12px 0 0; }
+
+  .steps { margin-top: 48px; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .steps > div { background: var(--void); display: grid; grid-template-columns: 96px 1fr; gap: 22px; padding: 28px 26px; align-items: baseline; }
+  .steps b { font-family: "Archivo Black", Impact, sans-serif; font-size: 2.4rem; color: var(--panel); line-height: 1; }
+  .steps h3 { font-size: 1.28rem; }
+  .steps p { color: var(--dim); margin: 9px 0 0; max-width: 62ch; }
+
+  .quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 46px; }
+  .quotes figure { margin: 0; padding: 26px; border: 1px solid var(--line); background: rgba(11,27,62,.6); }
+  .quotes .score { font-family: "Archivo Black", Impact, sans-serif; color: var(--blue-soft); font-size: 1.5rem; margin: 0 0 12px; }
+  .quotes blockquote { margin: 0; font-size: 1.04rem; }
+  .quotes figcaption { color: var(--dim); font-size: 14px; margin-top: 14px; font-weight: 600; }
+  .quotes .empty { border-style: dashed; background: transparent; }
+  .quotes .empty .score, .quotes .empty blockquote { color: var(--dim); }
+
+  .final { background: var(--blue); text-align: center; padding: 92px 0; }
+  .final h2 { font-size: clamp(2.3rem, 6.4vw, 4.6rem); color: #fff; }
+  .final p { font-size: 1.18rem; max-width: 46ch; margin: 20px auto 34px; color: rgba(255,255,255,.9); font-weight: 500; }
+  .final a {
+    background: #fff; color: var(--blue); text-decoration: none;
+    font: 700 20px/1 Barlow, sans-serif; padding: 22px 42px; display: inline-block; border: 3px solid #fff;
   }
-  .steps h3 { font-size: 1.05rem; }
-  .steps p { margin: 7px 0 0; font-size: 14.8px; color: var(--ink-soft); }
+  .final a:hover { background: transparent; color: #fff; }
 
-  .scope { display: grid; grid-template-columns: 1fr 1fr; gap: 0 46px; margin: 28px 0 0; padding: 0; }
-  .scope li { list-style: none; padding: 13px 0; border-bottom: 1px solid var(--rule); display: flex; gap: 12px; }
-  .scope li b { font-weight: 600; min-width: 148px; }
-  .scope li span { color: var(--ink-soft); font-size: 15px; }
-
-  .cta { text-align: center; padding: 60px 0 10px; }
-  .cta h2 { font-size: 2rem; }
-  .cta p { color: var(--ink-soft); margin: 14px auto 26px; max-width: 48ch; }
-
+  @media (max-width: 960px) {
+    .hero .shell { grid-template-columns: 1fr; gap: 42px; }
+    .hero figure { max-width: 260px; }
+    .hero figure figcaption { position: static; display: block; margin-top: 12px; }
+  }
   @media (max-width: 860px) {
-    .hero .shell, .steps, .scope { grid-template-columns: 1fr; }
-    .hero { padding-top: 40px; }
-    .steps { gap: 26px; }
+    .grid, .quotes { grid-template-columns: 1fr; }
+    .numbers .shell { grid-template-columns: repeat(2, 1fr); }
+    .steps > div { grid-template-columns: 58px 1fr; gap: 14px; padding: 22px 18px; }
+    .steps b { font-size: 1.8rem; }
+    section { padding: 66px 0; }
+    .hero { padding: 54px 0 48px; }
   }
 </style>
 </head>
 <body>
 
-<header class="masthead">
+<header class="top">
   <div class="shell">
-    <a class="wordmark" href="/">BSCH <span>EST. 2026</span></a>
+    <a class="mark" href="/"><img src="/logo-64.png" alt="" width="34" height="34"><span>BSCH</span></a>
     <nav>
-      <a href="/flow.html">How a build runs</a>
-      <a href="#staff">Join the team</a>
-      <a class="discord" href="#hire">Hire us</a>
+      <a href="#work">What you get</a>
+      <a href="#how">How it works</a>
+      <a href="/flow.html">Full process</a>
+      <a class="hire" href="__DISCORD__">Hire us</a>
     </nav>
   </div>
 </header>
@@ -84,90 +127,116 @@
   <section class="hero">
     <div class="shell">
       <div>
-        <h1>We build SCP roleplay servers, and we don't charge for it.</h1>
-        <p class="lede">Beanz's Server Creating Helpers is a volunteer crew of Discord builders. You describe the site you want. A builder claims it, builds it live in your server, and hands it back. The server stays yours.</p>
-        <div class="actions">
-          <a class="btn" href="#hire">Open a hire ticket</a>
-          <a class="btn ghost" href="/flow.html">See how a build runs</a>
+        <p class="kicker">BEANZ'S SERVER CREATING HELPERS</p>
+        <h1>Your SCP server,<br>built for <em>free</em>.</h1>
+        <p class="pitch">Tell us what your site is. A builder claims it within a day, builds it live in your server, and hands it back finished. No payment, no catch, nothing of ours left behind.</p>
+        <div class="row">
+          <a class="cta" href="__DISCORD__">Get my server built</a>
+          <a class="cta quiet" href="/flow.html">See the whole process</a>
         </div>
-        <p class="terms">Free, with <b>no catch</b>: no payment, no subscription, no ads in your server, no credit required. Donations are offered once at the end and change nothing.</p>
       </div>
-
-      <article class="file" aria-label="Example case file">
-        <header><span>CASE #0147</span><span class="stamp">IN PROGRESS</span></header>
-        <h2>Site-19 relocation build</h2>
-        <dl>
-          <dt>Client</dt><dd>@heavylock</dd>
-          <dt>Phase</dt><dd class="phase">Building</dd>
-          <dt>Lead builder</dt><dd>@coolbeanz02778</dd>
-          <dt>Helpers</dt><dd>@brooksy246</dd>
-          <dt>Extra info #1</dt><dd>Containment wing needs its own category per SCP</dd>
-          <dt>Extra info #2</dt><dd>MTF channels locked behind clearance roles</dd>
-        </dl>
-        <footer>Every request you make is written into the case file, numbered, and kept where you can read it.</footer>
-      </article>
+      <figure>
+        <img src="/logo-320.png" alt="BSCH logo: a wrench and hammer crossed over a shield, drawn as a blueprint" width="320" height="320">
+        <figcaption>DRAWN, THEN BUILT</figcaption>
+      </figure>
     </div>
   </section>
 
-  <section class="band">
+  <div class="numbers">
     <div class="shell">
-      <h2>What a build covers</h2>
-      <p>One SCP roleplay server, set up properly. We work to what's written in your ticket, and anything outside that comes back to you before it gets built.</p>
-      <ul class="scope">
-        <li><b>Channels</b><span>Laid out by department, with the permissions actually set, not left on default.</span></li>
-        <li><b>Roles</b><span>Clearance levels, MTF units, staff ranks, and the hierarchy that makes them work.</span></li>
-        <li><b>Categories</b><span>Containment, research, security, off-site, arranged so members can find things.</span></li>
-        <li><b>Lore fit</b><span>Naming and structure that matches your site's story, not a generic template.</span></li>
-        <li><b>Handover</b><span>Admin access removed the moment we're done. We tell you when to revoke it.</span></li>
-        <li><b>Afterwards</b><span>Come back any time. Your old builds are on file and we can pick up from them.</span></li>
-      </ul>
+      <div class="free"><strong>$0</strong><span>What it costs. Always.</span></div>
+      <div><strong>__SERVERS__</strong><span>Servers built and handed over</span></div>
+      <div><strong>__CLAIM__h</strong><span>Until a builder claims your ticket</span></div>
+      <div><strong>__RATING__</strong><span>Average client rating out of 10</span></div>
+    </div>
+  </div>
+
+  <section id="work">
+    <div class="shell">
+      <h2>What you actually <em>get</em></h2>
+      <p class="lede">One SCP roleplay server, set up like someone who plays them built it. Everything comes from what you wrote in your ticket, and anything outside that comes back to you first.</p>
+      <div class="grid">
+        <article>
+          <p class="tag">STRUCTURE</p>
+          <h3>Channels that make sense</h3>
+          <p>Laid out by department, named to your site's lore, with permissions actually set instead of left on default.</p>
+        </article>
+        <article>
+          <p class="tag">HIERARCHY</p>
+          <h3>Roles that hold up</h3>
+          <p>Clearance levels, MTF units, research and security, D-class, and a rank order that survives contact with real members.</p>
+        </article>
+        <article>
+          <p class="tag">HANDOVER</p>
+          <h3>Your server, your keys</h3>
+          <p>We hold admin only while we build, and the bot reminds you to revoke it the day we finish. Nothing of ours stays behind.</p>
+        </article>
+      </div>
     </div>
   </section>
 
-  <section class="band">
+  <section id="how">
     <div class="shell">
-      <h2>How it works</h2>
-      <p>Three things happen on your side. The rest is ours.</p>
-      <ol class="steps">
-        <li>
-          <h3>Open a ticket</h3>
-          <p>Answer four questions about the server you want. A builder claims it, usually the same day.</p>
-        </li>
-        <li>
-          <h3>Sign and give access</h3>
-          <p>You read a short agreement and press accept, then hand your builder an admin role so they can work live.</p>
-        </li>
-        <li>
-          <h3>Take it back</h3>
-          <p>Build finished, access revoked, ticket closed. Leave a rating if you feel like it.</p>
-        </li>
-      </ol>
-      <p style="margin-top:26px"><a href="/flow.html">See every step of the process, including what happens if something goes wrong.</a></p>
+      <h2>Three things on <em>your</em> side</h2>
+      <p class="lede">That's the whole job for you. The rest happens in the ticket while you watch.</p>
+      <div class="steps">
+        <div>
+          <b>01</b>
+          <div>
+            <h3>Open a ticket</h3>
+            <p>Four questions about the server you want. The bot files it as a case and pings the builders.</p>
+          </div>
+        </div>
+        <div>
+          <b>02</b>
+          <div>
+            <h3>Accept, then hand over a role</h3>
+            <p>Read the short agreement, press accept, and give your builder an admin role so they can work live.</p>
+          </div>
+        </div>
+        <div>
+          <b>03</b>
+          <div>
+            <h3>Take your server back</h3>
+            <p>Build done, access revoked, ticket closed. Rate us if you want. Come back whenever, your file stays on record.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="band" id="staff">
+  <section>
     <div class="shell">
-      <h2>Join the team</h2>
-      <p>We take builders and moderators. You apply in Discord, the bot asks you a set of questions, and Head Staff read your answers. Accepted applicants come in as Trainee and run one drill: a full practice case with a staff member playing the client. Pass it and you're a full Builder or Moderator.</p>
-      <p style="margin-top:14px">No experience running a public server is required for moderation. For building, show us something you've made.</p>
+      <h2>What clients <em>said</em></h2>
+      <p class="lede">The bot asks for a rating out of 10 at the end of every build. These are the words that came back with it.</p>
+      <div class="quotes">__REVIEWS__</div>
     </div>
   </section>
 
-  <section class="band cta" id="hire">
+  <section id="staff">
     <div class="shell">
-      <h2>Ready when you are</h2>
-      <p>Open a ticket in our Discord and tell us about your site. If nobody claims it within two days, the bot apologizes and closes it, so you're never left waiting on silence.</p>
-      <a class="btn" href="https://discord.gg/" rel="noopener">Join the Discord</a>
+      <h2>Or build <em>with us</em></h2>
+      <p class="lede">We take builders and moderators. Apply in Discord, answer the bot's questions, and Head Staff read them. Get in and you run one drill: a full practice case with a staff member playing a demanding client. Pass it and you're on the team properly.</p>
+      <div class="row" style="margin-top:32px">
+        <a class="cta quiet" href="__DISCORD__">Apply to join</a>
+      </div>
     </div>
   </section>
 </main>
 
+<section class="final">
+  <div class="shell">
+    <h2>Tell us about your site</h2>
+    <p>Open a ticket and describe what you're building. If nobody claims it in two days the bot apologises and closes it, so you're never left hanging.</p>
+    <a href="__DISCORD__">Join the Discord</a>
+  </div>
+</section>
+
 <footer class="site">
   <div class="shell">
     <span>BSCH — Beanz's Server Creating Helpers</span>
-    <a href="/flow.html">Hire flow</a>
-    <span style="margin-left:auto">Not affiliated with the SCP Foundation wiki. SCP content is CC BY-SA 3.0.</span>
+    <a href="/flow.html">Full process</a>
+    <span style="margin-left:auto">Not affiliated with the SCP Foundation. SCP content is CC BY-SA 3.0.</span>
   </div>
 </footer>
 

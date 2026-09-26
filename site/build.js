@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { marked } = require('marked');
 
 const ROOT = path.join(__dirname, '..');
@@ -67,16 +68,58 @@ function buildSop() {
     .replace('__UPDATED__', updated);
 }
 
+// Numbers, reviews and the invite link live in stats.json so they can be
+// changed without touching markup. Real reviews come from the bot's rating
+// step; until there are some, the page shows empty slots rather than invented
+// quotes.
+function fillTokens(html) {
+  const stats = JSON.parse(fs.readFileSync(path.join(SRC, 'stats.json'), 'utf-8'));
+
+  const reviews = stats.reviews.length
+    ? stats.reviews.map(r => `<figure>
+          <p class="score">${r.score}/10</p>
+          <blockquote>${r.quote}</blockquote>
+          <figcaption>${r.who}</figcaption>
+        </figure>`).join('\n        ')
+    : [1, 2, 3].map(() => `<figure class="empty">
+          <p class="score">—/10</p>
+          <blockquote>Your rating here.</blockquote>
+          <figcaption>Waiting on the next build</figcaption>
+        </figure>`).join('\n        ');
+
+  // Stamp the css and js links with a hash of their contents, so a browser
+  // never keeps yesterday's stylesheet after a deploy.
+  const stamp = file => crypto.createHash('md5')
+    .update(fs.readFileSync(path.join(SRC, file)))
+    .digest('hex')
+    .slice(0, 8);
+
+  return html
+    .replace('href="/base.css"', `href="/base.css?v=${stamp('base.css')}"`)
+    .replace('src="/flow-chart.js"', `src="/flow-chart.js?v=${stamp('flow-chart.js')}"`)
+    .replace(/__DISCORD__/g, stats.discord)
+    .replace(/__SERVERS__/g, stats.serversBuilt)
+    .replace(/__CLAIM__/g, stats.claimHours)
+    .replace(/__RATING__/g, stats.rating)
+    .replace(/__REVIEWS__/g, reviews);
+}
+
 function build() {
   fs.rmSync(DIST, { recursive: true, force: true });
   fs.mkdirSync(DIST, { recursive: true });
 
+  // Every page gets the same tokens filled in, so the header and links match
   for (const file of fs.readdirSync(SRC)) {
-    if (file === 'sop.template.html') continue;
-    fs.copyFileSync(path.join(SRC, file), path.join(DIST, file));
+    if (file === 'sop.template.html' || file === 'stats.json') continue;
+    const from = path.join(SRC, file);
+    if (file.endsWith('.html')) {
+      fs.writeFileSync(path.join(DIST, file), fillTokens(fs.readFileSync(from, 'utf-8')));
+    } else {
+      fs.copyFileSync(from, path.join(DIST, file));
+    }
   }
 
-  fs.writeFileSync(path.join(DIST, SOP_PATH), buildSop());
+  fs.writeFileSync(path.join(DIST, SOP_PATH), fillTokens(buildSop()));
 
   // Keep the SOP out of search engines and out of referrer headers
   fs.writeFileSync(path.join(DIST, 'robots.txt'), 'User-agent: *\nDisallow: /' + SOP_PATH + '\n');
