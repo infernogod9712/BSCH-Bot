@@ -304,35 +304,48 @@ for (const [[x, y], text, colour] of labels) {
   }, g);
   g.insertBefore(chip, label);
 }
-})();
 
 // ---- the blueprint draws itself in as you scroll past it ----
+// Plain rect maths rather than IntersectionObserver: observers do not fire
+// reliably for elements inside an SVG.
 const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-if (still) {
-  for (const g of drawnNodes) g.classList.add("in");
-  for (const path of drawnPaths) path.classList.add("in");
-} else {
+if (!still) {
+  // Nothing is hidden until this class is on, so a script error can never
+  // leave the chart blank.
+  svg.classList.add("animate");
+
   for (const path of drawnPaths) {
+    if (path.getAttribute("stroke-dasharray") !== "none") continue;   // dashed lines keep their pattern
     const length = path.getTotalLength();
-    path.style.strokeDasharray = path.getAttribute("stroke-dasharray") === "none" ? length : "";
-    if (path.getAttribute("stroke-dasharray") === "none") path.style.strokeDashoffset = length;
-    path.dataset.length = length;
+    path.style.strokeDasharray = length;
+    path.style.strokeDashoffset = length;
+    path.style.transition = "stroke-dashoffset .6s ease-out, opacity .3s ease";
   }
 
-  const appear = new IntersectionObserver((entries, obs) => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      const el = entry.target;
-      if (el.tagName === "path" && el.dataset.length && el.style.strokeDashoffset) {
-        el.style.transition = "stroke-dashoffset .55s ease-out, opacity .3s ease";
-        el.style.strokeDashoffset = 0;
-      }
+  const waiting = new Set([...drawnNodes, ...drawnPaths]);
+  const show = () => {
+    const limit = innerHeight * 0.92;
+    for (const el of waiting) {
+      const box = el.getBoundingClientRect();
+      if (box.top > limit) continue;
       el.classList.add("in");
-      obs.unobserve(el);
+      if (el.style.strokeDashoffset) el.style.strokeDashoffset = 0;
+      waiting.delete(el);
     }
-  }, { rootMargin: "-40px 0px -12% 0px" });
+    if (!waiting.size) removeEventListener("scroll", queue);
+  };
 
-  for (const g of drawnNodes) appear.observe(g);
-  for (const path of drawnPaths) appear.observe(path);
+  let queued = false;
+  const queue = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; show(); });
+  };
+
+  addEventListener("scroll", queue, { passive: true });
+  addEventListener("resize", queue, { passive: true });
+  show();
 }
+
+})();

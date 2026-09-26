@@ -43,10 +43,10 @@
   .label b, .measure b { font-weight: 700; }
   .node.dec .label { color: #eaf1ff; }
   /* each box and line arrives as you reach it */
-  .node { opacity: 0; transition: opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1); transform: translateY(12px); transform-box: fill-box; transform-origin: center; }
-  .node.in { opacity: 1; transform: none; }
-  path.edge { opacity: 0; transition: opacity .35s ease; }
-  path.edge.in { opacity: 1; }
+  svg.animate .node { opacity: 0; transition: opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1); transform: translateY(12px); transform-box: fill-box; transform-origin: center; }
+  svg.animate .node.in { opacity: 1; transform: none; }
+  svg.animate path.edge { opacity: 0; transition: opacity .35s ease; }
+  svg.animate path.edge.in { opacity: 1; }
   @media (prefers-reduced-motion: reduce) {
     .node, path.edge { opacity: 1; transform: none; transition: none; }
   }
