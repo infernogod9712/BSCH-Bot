@@ -114,6 +114,37 @@ for (const n of N) {
     n.y = prev.y + prev.h / 2 + GAP + n.h / 2;
   }
 }
+// A branch is a chain: the box hanging off the spine plus everything that
+// follows it. Two branches can want the same rows, so move whole chains out of
+// each other's way — moving single boxes would drop one branch into the middle
+// of another and orphan the box at the end of it.
+for (const col of ["r1", "r2"]) {
+  const inCol = N.filter(n => n.col === col);
+  const chains = inCol
+    .filter(n => n.anchor)
+    .map(head => {
+      const chain = [head];
+      let next = inCol.find(n => n.after === head.id);
+      while (next) {
+        chain.push(next);
+        next = inCol.find(n => n.after === next.id);
+      }
+      return chain;
+    })
+    .sort((a, b) => a[0].y - b[0].y);
+
+  let floor = -Infinity;
+  for (const chain of chains) {
+    const topOf = chain[0].y - chain[0].h / 2;
+    if (topOf < floor) {
+      const shift = floor - topOf;
+      for (const n of chain) n.y += shift;
+    }
+    const lastInChain = chain[chain.length - 1];
+    floor = lastInChain.y + lastInChain.h / 2 + GAP;
+  }
+}
+
 for (const n of N) n.x = COL[n.col];
 
 const top = n => [n.x, n.y - n.h / 2];
@@ -128,39 +159,49 @@ const flow = (...ids) => {
   for (let i = 0; i < ids.length - 1; i++) E.push([[bot(P(ids[i])), top(P(ids[i + 1]))], "plain"]);
 };
 
+// Sideways to a branch: straight when they line up, elbowed when they don't.
+const branch = (fromId, toId, colour, label, dashed) => {
+  const a = P(fromId), b = P(toId);
+  const midX = (a.x + a.w / 2 + b.x - b.w / 2) / 2;
+  const points = a.y === b.y
+    ? [right(a), left(b)]
+    : [right(a), [midX, a.y], [midX, b.y], left(b)];
+  E.push([points, colour, label, dashed, [(a.x + a.w / 2 + midX) / 2, a.y - 12]]);
+};
+
 flow("t1", "n2", "n3", "d4");
-E.push([[right(P("n3")), left(P("ref"))], "plain", "first time only", true]);
+branch("n3", "ref", "plain", "first time only", true);
 E.push([[bot(P("d4")), top(P("n5"))], "yes", "Yes"]);
-E.push([[right(P("d4")), left(P("b4"))], "no", "No"]);
+branch("d4", "b4", "no", "No");
 flow("b4", "d4b");
-E.push([[right(P("d4b")), left(P("ap"))], "no", "No"]);
+branch("d4b", "ap", "no", "No");
 flow("ap", "t4");
 E.push([[bot(P("d4b")), [P("d4b").x, P("n5").y], right(P("n5"))], "yes", "Yes"]);
 flow("n5", "n6", "n7", "n8", "n8b");
 E.push([[left(P("n8b")), [LANE.a, P("n8b").y], [LANE.a, P("n6").y], left(P("n6"))], "loop", "loop as needed", false,
         [LANE.a, (P("n6").y + P("n8b").y) / 2]]);
-E.push([[right(P("n7")), left(P("n9"))], "plain", "any time", true]);
+branch("n7", "n9", "plain", "any time", true);
 flow("n8b", "n10", "n11", "d12");
-E.push([[right(P("d12")), left(P("c1"))], "no", "Decline"]);
+branch("d12", "c1", "no", "Decline");
 flow("c1", "c2", "c3", "t12");
 E.push([[bot(P("d12")), top(P("n12"))], "yes", "Either Accept"]);
 flow("n12", "dvc");
-E.push([[right(P("dvc")), left(P("vc1"))], "yes", "Yes"]);
+branch("dvc", "vc1", "yes", "Yes");
 E.push([[bot(P("dvc")), top(P("n13"))], "no", "No"]);
 E.push([[bot(P("vc1")), [P("vc1").x, P("n13").y], right(P("n13"))], "yes"]);
 flow("n13", "n14", "n15", "n16", "n17", "n18", "n19", "n20", "d19");
-E.push([[right(P("d19")), left(P("r1n"))], "yes", "Yes"]);
+branch("d19", "r1n", "yes", "Yes");
 flow("r1n", "r2n", "r3n");
 E.push([[bot(P("r3n")), [P("r3n").x, P("n21").y], right(P("n21"))], "plain"]);
 E.push([[bot(P("d19")), top(P("n21"))], "no", "No"]);
-E.push([[right(P("n21")), left(P("show"))], "plain", "if showcased", true]);
+branch("n21", "show", "plain", "if showcased", true);
 flow("n21", "n22", "d22");
 E.push([[bot(P("d22")), top(P("d23"))], "yes", "Yes"]);
 E.push([[left(P("d22")), [LANE.a, P("d22").y], [LANE.a, P("n25").y], left(P("n25"))], "no", "No", false, [LANE.a, P("d22").y + 70]]);
 E.push([[bot(P("d23")), top(P("n23a"))], "yes", "Yes"]);
 E.push([[left(P("d23")), [LANE.b, P("d23").y], [LANE.b, P("n25").y]], "no", "No", false, [LANE.b + 6, P("d23").y + 70]]);
 flow("n23a", "n23b", "n24", "n25", "d26");
-E.push([[right(P("d26")), left(P("ask"))], "no", "No"]);
+branch("d26", "ask", "no", "No");
 E.push([[bot(P("ask")), [P("ask").x, P("n25").y], right(P("n25"))], "plain", "ticket stays open"]);
 E.push([[bot(P("d26")), top(P("fin"))], "yes", "Yes"]);
 flow("fin", "end");
@@ -175,9 +216,8 @@ const el = (tag, attrs, parent = svg) => {
   return e;
 };
 
-const last = N[N.length - 1];
-const VW = COL.r2 + W.r2 / 2 + 60;
-const VH = last.y + last.h / 2 + 60;
+const VW = Math.max(...N.map(n => n.x + n.w / 2)) + 60;
+const VH = Math.max(...N.map(n => n.y + n.h / 2)) + 60;
 svg.setAttribute("viewBox", `0 0 ${VW} ${VH}`);
 svg.setAttribute("width", VW);
 svg.setAttribute("height", VH);
@@ -197,9 +237,10 @@ el("path", { d: "M40 0 H0 V40", fill: "none", stroke: "rgba(185,205,242,.10)", "
 el("rect", { x: 0, y: 0, width: VW, height: VH, fill: "url(#grid)" });
 
 const labels = [];
+const drawnPaths = [];
 for (const [points, colour, label, dashed, at] of E) {
   const openEnd = points[points.length - 1][0] === LANE.b;   // merges into another line
-  el("path", {
+  drawnPaths.push(el("path", {
     d: "M" + points.map(p => p.join(" ")).join(" L"),
     fill: "none",
     stroke: LINE[colour],
@@ -207,15 +248,18 @@ for (const [points, colour, label, dashed, at] of E) {
     "stroke-linejoin": "round",
     "stroke-dasharray": dashed ? "7 5" : "none",
     "marker-end": openEnd ? "" : `url(#tip-${colour})`,
-  });
+    class: "edge",
+  }));
   if (!label) continue;
   const [p, q] = points;
   const horizontal = p[1] === q[1];
   labels.push([at || [(p[0] + q[0]) / 2, horizontal ? p[1] - 10 : (p[1] + q[1]) / 2 + 4], label, LINE[colour]]);
 }
 
+const drawnNodes = [];
 for (const n of N) {
   const g = el("g", { class: "node " + n.kind });
+  drawnNodes.push(g);
   if (n.kind === "dec") {
     el("polygon", {
       points: `${n.x},${n.y - n.h / 2} ${n.x + n.w / 2},${n.y} ${n.x},${n.y + n.h / 2} ${n.x - n.w / 2},${n.y}`,
@@ -261,3 +305,34 @@ for (const [[x, y], text, colour] of labels) {
   g.insertBefore(chip, label);
 }
 })();
+
+// ---- the blueprint draws itself in as you scroll past it ----
+const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (still) {
+  for (const g of drawnNodes) g.classList.add("in");
+  for (const path of drawnPaths) path.classList.add("in");
+} else {
+  for (const path of drawnPaths) {
+    const length = path.getTotalLength();
+    path.style.strokeDasharray = path.getAttribute("stroke-dasharray") === "none" ? length : "";
+    if (path.getAttribute("stroke-dasharray") === "none") path.style.strokeDashoffset = length;
+    path.dataset.length = length;
+  }
+
+  const appear = new IntersectionObserver((entries, obs) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      const el = entry.target;
+      if (el.tagName === "path" && el.dataset.length && el.style.strokeDashoffset) {
+        el.style.transition = "stroke-dashoffset .55s ease-out, opacity .3s ease";
+        el.style.strokeDashoffset = 0;
+      }
+      el.classList.add("in");
+      obs.unobserve(el);
+    }
+  }, { rootMargin: "-40px 0px -12% 0px" });
+
+  for (const g of drawnNodes) appear.observe(g);
+  for (const path of drawnPaths) appear.observe(path);
+}

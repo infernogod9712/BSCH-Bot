@@ -5,19 +5,52 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BSCH — free SCP roleplay server builds</title>
 <meta name="description" content="We build SCP roleplay Discord servers. Free, start to finish, by builders who do this for fun.">
-<link rel="icon" href="/logo-64.png">
+<link rel="icon" href="/logo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <link rel="stylesheet" href="/base.css">
 <style>
-  /* blueprint paper: grid, drawn once behind the whole page */
+  /* blueprint paper: grid, drifting a touch behind the page as you scroll */
   body::before {
-    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    content: ""; position: fixed; inset: -60px 0; z-index: -1; pointer-events: none;
     background-image:
       linear-gradient(rgba(122,165,255,.07) 1px, transparent 1px),
       linear-gradient(90deg, rgba(122,165,255,.07) 1px, transparent 1px);
     background-size: 48px 48px;
+    transform: translateY(calc(var(--grid-shift, 0px) * -1));
+  }
+
+  /* one orchestrated entrance, then the page sits still */
+  @keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes float { from { transform: translateY(-9px); } to { transform: translateY(9px); } }
+  @keyframes sweep { from { transform: translateX(-120%) skewX(-18deg); } to { transform: translateX(320%) skewX(-18deg); } }
+
+  .hero .kicker, .hero h1, .hero .pitch, .hero .row { animation: rise .7s cubic-bezier(.2,.7,.3,1) backwards; }
+  .hero .kicker { animation-delay: .05s; }
+  .hero h1 { animation-delay: .14s; }
+  .hero .pitch { animation-delay: .26s; }
+  .hero .row { animation-delay: .36s; }
+  .hero figure { animation: fade .9s ease .3s backwards; }
+  .hero figure img { animation: float 5.5s ease-in-out .9s infinite alternate; }
+
+  /* anything marked for reveal waits until it is scrolled to */
+  [data-reveal] { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.3,1); }
+  [data-reveal].shown { opacity: 1; transform: none; }
+
+  /* a light passes over the main button once the entrance finishes */
+  .cta { position: relative; overflow: hidden; }
+  .cta::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 42px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+    animation: sweep 4.5s ease-in-out 1.6s infinite;
+  }
+  .cta.quiet::after { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero .kicker, .hero h1, .hero .pitch, .hero .row, .hero figure, .hero figure img, .cta::after { animation: none; }
+    [data-reveal] { opacity: 1; transform: none; transition: none; }
   }
 
   /* ---- hero ---- */
@@ -26,14 +59,14 @@
     content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background: radial-gradient(760px 420px at 74% 22%, rgba(47,107,255,.30), transparent 72%);
   }
-  .hero .shell { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 60px; align-items: center; }
+  .hero .shell { display: grid; grid-template-columns: minmax(0, 1fr) 430px; gap: 56px; align-items: center; }
   .kicker { font: 500 13px/1 "IBM Plex Mono", monospace; color: var(--blue-soft); letter-spacing: .2em; margin: 0; }
   .hero h1 { font-size: clamp(3rem, 8.6vw, 6.6rem); margin: 20px 0 0; letter-spacing: -0.035em; }
   .hero h1 em { font-style: normal; color: var(--blue-soft); }
   .hero p.pitch { font-size: clamp(1.05rem, 1.7vw, 1.3rem); color: var(--dim); max-width: 52ch; margin: 24px 0 0; }
   .hero .row { display: flex; gap: 16px; margin-top: 36px; flex-wrap: wrap; }
   .hero figure { margin: 0; position: relative; }
-  .hero figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); }
+  .hero figure img { width: 100%; height: auto; display: block; filter: drop-shadow(0 18px 40px rgba(47,107,255,.35)); }
   .hero figure figcaption {
     position: absolute; left: 0; bottom: -30px;
     font: 500 12px/1 "IBM Plex Mono", monospace; color: var(--dim); letter-spacing: .1em;
@@ -96,7 +129,7 @@
 
   @media (max-width: 960px) {
     .hero .shell { grid-template-columns: 1fr; gap: 42px; }
-    .hero figure { max-width: 260px; }
+    .hero figure { max-width: 320px; }
     .hero figure figcaption { position: static; display: block; margin-top: 12px; }
   }
   @media (max-width: 860px) {
@@ -113,7 +146,7 @@
 
 <header class="top">
   <div class="shell">
-    <a class="mark" href="/"><img src="/logo-64.png" alt="" width="34" height="34"><span>BSCH</span></a>
+    <a class="mark" href="/"><img src="/logo-96.png" alt="" width="42" height="42"><span>BSCH</span></a>
     <nav>
       <a href="#work">What you get</a>
       <a href="#how">How it works</a>
@@ -136,7 +169,7 @@
         </div>
       </div>
       <figure>
-        <img src="/logo-320.png" alt="BSCH logo: a wrench and hammer crossed over a shield, drawn as a blueprint" width="320" height="320">
+        <img src="/logo-480.png" alt="BSCH logo: a wrench and hammer crossed over a shield, drawn as a blueprint" width="480" height="480">
         <figcaption>DRAWN, THEN BUILT</figcaption>
       </figure>
     </div>
@@ -144,14 +177,14 @@
 
   <div class="numbers">
     <div class="shell">
-      <div class="free"><strong>$0</strong><span>What it costs. Always.</span></div>
-      <div><strong>__SERVERS__</strong><span>Servers built and handed over</span></div>
-      <div><strong>__CLAIM__h</strong><span>Until a builder claims your ticket</span></div>
+      <div class="free"><strong data-count="0" data-prefix="$">$0</strong><span>What it costs. Always.</span></div>
+      <div><strong data-count="__SERVERS__">__SERVERS__</strong><span>Servers built and handed over</span></div>
+      <div><strong data-count="__CLAIM__" data-suffix="h">__CLAIM__h</strong><span>Until a builder claims your ticket</span></div>
       <div><strong>__RATING__</strong><span>Average client rating out of 10</span></div>
     </div>
   </div>
 
-  <section id="work">
+  <section id="work" data-reveal>
     <div class="shell">
       <h2>What you actually <em>get</em></h2>
       <p class="lede">One SCP roleplay server, set up like someone who plays them built it. Everything comes from what you wrote in your ticket, and anything outside that comes back to you first.</p>
@@ -175,7 +208,7 @@
     </div>
   </section>
 
-  <section id="how">
+  <section id="how" data-reveal>
     <div class="shell">
       <h2>Three things on <em>your</em> side</h2>
       <p class="lede">That's the whole job for you. The rest happens in the ticket while you watch.</p>
@@ -209,22 +242,22 @@
     <div class="shell">
       <h2>What clients <em>said</em></h2>
       <p class="lede">The bot asks for a rating out of 10 at the end of every build. These are the words that came back with it.</p>
-      <div class="quotes">__REVIEWS__</div>
+      <div class="quotes" data-reveal>__REVIEWS__</div>
     </div>
   </section>
 
-  <section id="staff">
+  <section id="staff" data-reveal>
     <div class="shell">
       <h2>Or build <em>with us</em></h2>
       <p class="lede">We take builders and moderators. Apply in Discord, answer the bot's questions, and Head Staff read them. Get in and you run one drill: a full practice case with a staff member playing a demanding client. Pass it and you're on the team properly.</p>
       <div class="row" style="margin-top:32px">
-        <a class="cta quiet" href="__DISCORD__">Apply to join</a>
+        <a class="cta quiet" href="__DISCORD_APPLY__">Apply to join</a>
       </div>
     </div>
   </section>
 </main>
 
-<section class="final">
+<section class="final" data-reveal>
   <div class="shell">
     <h2>Tell us about your site</h2>
     <p>Open a ticket and describe what you're building. If nobody claims it in two days the bot apologises and closes it, so you're never left hanging.</p>
@@ -240,5 +273,6 @@
   </div>
 </footer>
 
+<script src="/motion.js"></script>
 </body>
 </html>

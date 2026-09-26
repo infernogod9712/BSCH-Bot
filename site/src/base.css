@@ -53,10 +53,10 @@ code, .mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; f
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--line);
 }
-.top .shell { display: flex; align-items: center; gap: 26px; min-height: 66px; }
+.top .shell { display: flex; align-items: center; gap: 26px; min-height: 74px; }
 .mark { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--text); }
-.mark img { width: 34px; height: 34px; display: block; }
-.mark span { font-family: "Archivo Black", Impact, sans-serif; font-size: 21px; letter-spacing: -0.02em; }
+.mark img { width: 42px; height: 42px; display: block; }
+.mark span { font-family: "Archivo Black", Impact, sans-serif; font-size: 24px; letter-spacing: -0.02em; }
 .top nav { margin-left: auto; display: flex; align-items: center; gap: 24px; font-weight: 600; font-size: 15px; }
 .top nav a { color: var(--dim); text-decoration: none; }
 .top nav a:hover { color: var(--text); }

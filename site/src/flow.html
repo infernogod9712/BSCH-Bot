@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>How a BSCH build runs</title>
 <meta name="description" content="Every step of a BSCH hire case, from opening a ticket to closing it, including what happens when something goes wrong.">
-<link rel="icon" href="/logo-64.png">
+<link rel="icon" href="/logo-96.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -22,8 +22,9 @@
   .sw.dec { width: 22px; height: 14px; clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); background: #b9cdf2; }
   .ln { width: 26px; height: 3px; border-radius: 2px; }
 
-  .scroller { overflow-x: auto; border: 1px solid var(--line); background: #08152f; }
-  svg { display: block; }
+  /* the chart scales to the page: vertical scrolling only, no dragging */
+  .chart-frame { border: 1px solid var(--line); background: #08152f; }
+  .chart-frame svg { display: block; width: 100%; height: auto; }
 
   /* label styles used inside the chart's foreignObjects */
   .label, .measure {
@@ -41,6 +42,15 @@
   }
   .label b, .measure b { font-weight: 700; }
   .node.dec .label { color: #eaf1ff; }
+  /* each box and line arrives as you reach it */
+  .node { opacity: 0; transition: opacity .5s ease, transform .5s cubic-bezier(.2,.7,.3,1); transform: translateY(12px); transform-box: fill-box; transform-origin: center; }
+  .node.in { opacity: 1; transform: none; }
+  path.edge { opacity: 0; transition: opacity .35s ease; }
+  path.edge.in { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .node, path.edge { opacity: 1; transform: none; transition: none; }
+  }
+
   text.step { font: 700 11px "IBM Plex Mono", monospace; }
   text.edge-label { font: 600 12px Barlow, sans-serif; }
 
@@ -51,7 +61,7 @@
 
 <header class="top">
   <div class="shell">
-    <a class="mark" href="/"><img src="/logo-64.png" alt="" width="34" height="34"><span>BSCH</span></a>
+    <a class="mark" href="/"><img src="/logo-96.png" alt="" width="42" height="42"><span>BSCH</span></a>
     <nav>
       <a href="/#work">What you get</a>
       <a href="/#how">How it works</a>
@@ -64,7 +74,7 @@
 <main class="page">
   <div class="shell">
     <h1>How a build runs</h1>
-    <p class="lede">Every step of a hire case, from the ticket opening to the moment it's archived. Boxes are things that happen, diamonds are decisions, and the rounded ends are where a case starts and stops. Drag sideways to see the branches.</p>
+    <p class="lede">Every step of a hire case, from the ticket opening to the moment it's archived. Boxes are things that happen, diamonds are decisions, and the rounded ends are where a case starts and stops. Everything fits on the page, so just scroll.</p>
 
     <div class="legend">
       <span class="key"><span class="sw" style="background:#1f57d6"></span>Bot</span>
@@ -77,7 +87,7 @@
       <span class="key"><span class="ln" style="background:#fbbf24"></span>Repeats</span>
     </div>
 
-    <div class="scroller"><svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div class="chart-frame"><svg id="chart" xmlns="http://www.w3.org/2000/svg"></svg></div>
   </div>
 </main>
 

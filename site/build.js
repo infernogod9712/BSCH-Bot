@@ -97,6 +97,7 @@ function fillTokens(html) {
   return html
     .replace('href="/base.css"', `href="/base.css?v=${stamp('base.css')}"`)
     .replace('src="/flow-chart.js"', `src="/flow-chart.js?v=${stamp('flow-chart.js')}"`)
+    .replace(/__DISCORD_APPLY__/g, stats.discordApply || stats.discord)
     .replace(/__DISCORD__/g, stats.discord)
     .replace(/__SERVERS__/g, stats.serversBuilt)
     .replace(/__CLAIM__/g, stats.claimHours)
