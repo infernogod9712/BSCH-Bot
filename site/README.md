@@ -35,7 +35,7 @@ settings live in `wrangler.jsonc` at the repo root, pointing at `site/dist`.
 3. Build command: `cd site && npm install && npm run build`
 4. Deploy command: leave `npx wrangler deploy` as it is.
 5. Leave **Protect with Cloudflare Access** off, or the public pages ask for a login too.
-6. **Deploy**. It goes live at `bsch.<your-subdomain>.workers.dev`.
+6. **Deploy**. It goes live at `bsch.beanzo.workers.dev`.
 
 Every push to `master` rebuilds and redeploys it. No other step.
 
