@@ -433,7 +433,7 @@ Senior Staff change the bot's channels, categories, roles and timers with `/conf
 
 The hiring contract is not a setting: it lives in the bot's own `contract.js` file and carries a version number, so changing it is a code change that gets pushed like any other.
 
-`/postpanel [panel]` posts a panel into the status panel channel, or into a channel you name. Two panels exist: **How people found BSCH**, which draws the answers to the dropdown clients get when they open a ticket or an application and redraws itself every time someone answers, and **Staff SOP**, which links this document. Posting a panel again replaces the old copy rather than leaving two.
+`/postpanel [panel]` posts a panel into that panel's home channel, or into a channel you name. Two panels exist: **How people found BSCH**, which lives in the status panel channel, draws the answers to the dropdown clients get when they open a ticket or an application, and redraws itself every time someone answers; and **Staff SOP**, which lives in the SOP channel and links this document. Posting a panel again replaces the old copy rather than leaving two.
 
 ---
 

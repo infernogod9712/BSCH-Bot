@@ -11,11 +11,13 @@ const PANELS = {
     label: 'How people found BSCH',
     // Tracked, because this one redraws itself whenever someone answers
     tracked: true,
+    channelKey: 'statusPanelChannel',
     build: () => buildPanelEmbed(),
   },
   sop: {
     label: 'Staff SOP',
     tracked: false,
+    channelKey: 'sopChannel',
     build: (config) => {
       const link = config.links && config.links.sopDoc;
       if (!link) return null;
@@ -50,11 +52,13 @@ module.exports = {
 
     const key = interaction.options.getString('panel');
     const panel = PANELS[key];
+    // Each panel has a home channel; naming one in the command wins
     const channel = interaction.options.getChannel('channel')
+      || interaction.guild.channels.cache.get(config.channels[panel.channelKey])
       || interaction.guild.channels.cache.get(config.channels.statusPanelChannel);
 
     if (!channel) {
-      return interaction.reply({ content: '❌ No status panel channel set. Set it with `/config`, or name a channel in this command.', flags: 64 });
+      return interaction.reply({ content: `❌ No home channel set for **${panel.label}**. Set it with \`/config\`, or name a channel in this command.`, flags: 64 });
     }
 
     const embed = panel.build(config);
