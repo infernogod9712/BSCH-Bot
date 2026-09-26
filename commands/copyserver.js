@@ -55,25 +55,32 @@ module.exports = {
             timestamp: new Date().toISOString(),
         };
 
+        // The log lives in the MAIN BSCH server, not the client's server this
+        // command was run in.
         let logged = false;
-        const forum = interaction.guild.channels.cache.get(config.channels.templateLogForum);
-        if (forum && forum.type === ChannelType.GuildForum) {
-            await forum.threads.create({
+        let logError = "";
+        const main = client.guilds.cache.get(config.guildId);
+        const forum = main ? main.channels.cache.get(config.channels.templateLogForum) : null;
+        if (!main) {
+            logError = "I'm not in the main BSCH server, or `guildId` is wrong.";
+        } else if (!forum) {
+            logError = "The template log channel wasn't found in the BSCH server. Set it with `/config`.";
+        } else if (forum.type === ChannelType.GuildForum) {
+            const thread = await forum.threads.create({
                 name: `${name} — ${snapshot.counts.channels} channels`,
                 message: { embeds: [logEmbed], files: [file] },
-            }).catch(() => {});
-            logged = true;
-        } else if (forum) {
-            // Not a forum channel — just send a normal message with the log
-            await forum.send({ embeds: [logEmbed], files: [file] }).catch(() => {});
-            logged = true;
+            }).catch(err => { logError = err.message; return null; });
+            logged = Boolean(thread);
+        } else {
+            const msg = await forum.send({ embeds: [logEmbed], files: [file] }).catch(err => { logError = err.message; return null; });
+            logged = Boolean(msg);
         }
 
         return interaction.editReply({
             content:
                 `✅ Saved **${name}** to the template bank: ` +
                 `${snapshot.counts.roles} roles, ${snapshot.counts.categories} categories, ${snapshot.counts.channels} channels.` +
-                (logged ? "\n📓 Logged to the template-log forum." : "\n⚠️ Couldn't post to the template-log forum (check the `templateLogForum` id)."),
+                (logged ? "\n📓 Logged to the template-log forum." : `\n⚠️ Saved, but I couldn't log it: ${logError}`),
         });
     },
 };

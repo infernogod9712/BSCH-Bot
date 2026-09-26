@@ -14,8 +14,10 @@ const OVERRIDES_PATH = path.join(process.env.BSCH_DATA_DIR || path.join(__dirnam
 
 // Settings that newer code expects. Added to the live config if missing.
 const DEFAULTS = {
-  channels: { drillRequestChannel: '' },
-  timers: { drillBuildDeadlineDays: 5 },
+  channels: { drillRequestChannel: '', showcaseChannel: '', statusPanelChannel: '' },
+  categories: { generalTickets: '', bugTickets: '', buildHelpTickets: '', archive: '' },
+  timers: { drillBuildDeadlineDays: 5, archiveDeleteDays: 7 },
+  links: { sopDoc: '' },
 };
 
 // Everything /config can change. type: channel | category | role | roleList | number | text
@@ -34,8 +36,13 @@ const SETTINGS = {
   'channels.infractionsChannel': { type: 'channel', label: 'Infractions channel' },
   'channels.transcriptsChannel': { type: 'channel', label: 'Transcripts channel' },
   'channels.modmailChannel': { type: 'channel', label: 'Mod mail channel' },
+  'channels.showcaseChannel': { type: 'channel', label: 'Build showcase channel' },
+  'channels.statusPanelChannel': { type: 'channel', label: 'Status panel channel' },
   'categories.hireTickets': { type: 'category', label: 'Hire tickets category' },
-  'categories.supportTickets': { type: 'category', label: 'Support tickets category' },
+  'categories.generalTickets': { type: 'category', label: 'General support category' },
+  'categories.bugTickets': { type: 'category', label: 'Bug report category' },
+  'categories.buildHelpTickets': { type: 'category', label: 'Server build help category' },
+  'categories.archive': { type: 'category', label: 'Archived tickets category' },
   'categories.applications': { type: 'category', label: 'Applications category' },
   'categories.drills': { type: 'category', label: 'Drills category' },
   'roles.owner': { type: 'role', label: 'Owner role' },
@@ -54,8 +61,9 @@ const SETTINGS = {
   'timers.applicationDenyCooldownDays': { type: 'number', label: 'Days before a denied applicant can reapply' },
   'timers.drillFailCooldownDays': { type: 'number', label: 'Days before a failed trainee can request a drill' },
   'timers.drillBuildDeadlineDays': { type: 'number', label: 'Days a builder trainee has to submit their drill build' },
+  'timers.archiveDeleteDays': { type: 'number', label: 'Days an archived ticket sits before it is deleted' },
   'links.donationLink': { type: 'text', label: 'Donation link' },
-  'contract.currentText': { type: 'text', label: 'Hiring contract (text or link)' },
+  'links.sopDoc': { type: 'text', label: 'Staff SOP document link' },
 };
 
 function readJson(file, fallback) {

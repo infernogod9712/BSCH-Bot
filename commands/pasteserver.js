@@ -93,7 +93,9 @@ module.exports = {
             ],
             timestamp: new Date().toISOString(),
         };
-        const forum = interaction.guild.channels.cache.get(config.channels.templateLogForum);
+        // Log in the main BSCH server, not the client's server we just built in
+        const main = client.guilds.cache.get(config.guildId);
+        const forum = main ? main.channels.cache.get(config.channels.templateLogForum) : null;
         if (forum && forum.type === ChannelType.GuildForum) {
             await forum.threads.create({ name: `Pasted: ${template.name}`, message: { embeds: [logEmbed] } }).catch(() => {});
         } else if (forum) {

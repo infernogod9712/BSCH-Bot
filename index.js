@@ -12,8 +12,12 @@ const supportHandler = require('./handlers/supporthandler');
 const hiringHandler = require('./handlers/hiringhandler');
 const modmailHandler = require('./handlers/modmailhandler');
 const applicationHandler = require('./handlers/applicationhandler');
+const referralHandler = require('./handlers/referralhandler');
+const extraInfoHandler = require('./handlers/extrainfohandler');
 const store = require('./hire/store');
 const { sweepDrills } = require('./onboarding/drills');
+const { sweepArchive } = require('./handlers/archive');
+const { sweepSuspensions } = require('./staff/actions');
 const { startAutoSync } = require('./git-sync');
 
 // ---- Create the bot ----
@@ -59,9 +63,11 @@ client.on('interactionCreate', async (interaction) => {
       if (!command) return;
       await command.execute(interaction, client, config);
 
-    // Button click or modal submit → route to the right handler by customId
-    } else if (interaction.isButton() || interaction.isModalSubmit()) {
-      if (interaction.customId.startsWith('hire')) {
+    // Button click, dropdown pick or modal submit → route by customId
+    } else if (interaction.isButton() || interaction.isModalSubmit() || interaction.isStringSelectMenu()) {
+      if (interaction.customId.startsWith('referral_pick')) {
+        await referralHandler.handleSelect(interaction, client, config);
+      } else if (interaction.customId.startsWith('hire')) {
         await hiringHandler.handle(interaction, client, config);
       } else if (interaction.customId.startsWith('modmail')) {
         await modmailHandler.handle(interaction, client, config);
@@ -119,6 +125,9 @@ client.on('messageCreate', async (message) => {
     });
   }
 
+  // !inject / !sub — add, reword or remove an Extra Info entry on this case
+  if (await extraInfoHandler.handleMessage(message, client, config).catch(() => false)) return;
+
   // !buildlogs @client  — pull a client's full case history (staff only)
   if (message.content.trim().toLowerCase().startsWith('!buildlogs')) {
     const isStaff = (config.staffRoles || []).some(id => message.member.roles.cache.has(id));
@@ -159,6 +168,10 @@ async function sweepCases() {
 
     // Builder drills with no build handed in before the deadline
     await sweepDrills(guild, config).catch(e => console.error('sweepDrills error:', e));
+    // Archived tickets that have gone quiet long enough to delete
+    await sweepArchive(guild, config).catch(e => console.error('sweepArchive error:', e));
+    // Staff suspensions that have run their course
+    await sweepSuspensions(guild, config).catch(e => console.error('sweepSuspensions error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim/inactivity timers

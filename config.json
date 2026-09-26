@@ -1,6 +1,5 @@
 {
-  "guildId": "1497625871370944614", 
-
+  "guildId": "1497625871370944614",
   "channels": {
     "hireUs": "1506727116849414174",
     "helpDesk": "1533230811153830008",
@@ -15,16 +14,19 @@
     "promotionsChannel": "1533390897549676674",
     "infractionsChannel": "1533390992370171904",
     "transcriptsChannel": "1536305824073383947",
-    "modmailChannel": "1536456399612289166"
+    "modmailChannel": "1536456399612289166",
+    "showcaseChannel": "1533733596282753128",
+    "statusPanelChannel": "1553120438039609354"
   },
-
   "categories": {
-    "hireTickets": "1533129200360231072",
-    "supportTickets": "1533129316442046605",
+    "hireTickets": "1553122748048347166",
     "applications": "1536289430044807249",
-    "drills": "1536289372998074368"
+    "drills": "1536289372998074368",
+    "generalTickets": "1553122779002577037",
+    "bugTickets": "1553122811915276359",
+    "buildHelpTickets": "1553123073207828561",
+    "archive": "1553123150647271486"
   },
-
   "roles": {
     "owner": "1498133594915209257",
     "coOwner": "1498419215483277462",
@@ -35,9 +37,13 @@
     "staffTeam": "1533411357691482142",
     "trainee": "1533454316663341096",
     "member": "1498134947355951205",
-    "seniorStaffRoles": ["headStaff", "admin", "coOwner", "owner"]
+    "seniorStaffRoles": [
+      "headStaff",
+      "admin",
+      "coOwner",
+      "owner"
+    ]
   },
-
   "staffRoles": [
     "1498133594915209257",
     "1498419215483277462",
@@ -47,23 +53,18 @@
     "1533410804383223988",
     "1533411357691482142"
   ],
-
   "timers": {
     "claimPingHours": 24,
     "claimAutoCloseHours": 48,
     "applicationDenyCooldownDays": 14,
     "drillFailCooldownDays": 7,
-    "clientInactivityHours": 24
+    "clientInactivityHours": 24,
+    "archiveDeleteDays": 7
   },
-
   "links": {
-    "donationLink": ""
+    "donationLink": "",
+    "sopDoc": "https://docs.google.com/document/d/1R9sUEUWKdo2k_JWisJb87cLd9X1zDFEqUcp0XOUfZHs/edit"
   },
-
-  "contract": {
-    "currentText": "https://docs.google.com/document/d/1376hMCJH9OASygGRFE6FUDXH2T0djvRzy4wO-NkSMOI/edit?usp=sharing"
-  },
-
   "ticketNaming": {
     "hire": "hire-{client}-{ticketId}",
     "support": "{type}-{client}",

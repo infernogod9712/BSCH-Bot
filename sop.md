@@ -43,11 +43,13 @@ The BSCH bot is a custom Node.js/discord.js bot. It previously ran on Discloud b
 
 ---
 
-## Section 1 - Hiring SOP (Client Flow v4)
+## Section 1 - Hiring SOP (Client Flow v5)
 
 This section governs every BSCH case from the moment a client opens a ticket to the moment it closes. A **case** is the full record of one client's hire request, identified by a unique **ticketId** generated the instant the ticket opens. Every command operates on whichever case corresponds to the channel it is run in - the bot resolves this automatically from channel context, no command ever requires typing or pasting a case ID by hand. If a case-related command is run outside a valid ticket channel, the bot rejects it.
 
 Every stage of a case produces two synchronized effects: a plain-language message posted into the ticket announcing what just happened, and a live edit to the case's tracked embeds - both inside the ticket and in the mirrored embed(s) in that case's forum post. Ticket and case file must always agree, and every logged action is timestamped.
+
+A flowchart of every step below, including each decision and where it leads: https://claude.ai/artifact/4f7fZiRJBrUWVfC3YxqjN7
 
 ### Channel Structure (Hiring-specific)
 
@@ -77,6 +79,8 @@ This record is what both the ticket embeds and the case file post render from - 
 
 When a member opens a hire ticket, the bot immediately generates a new **ticketId** and creates the matching forum post in **hire-bsch-case-logs**, and names the ticket channel `hire-[clientuser]-[ticketid]` (e.g. `hire-coolbeanz-999`). The first embed the bot posts in the new ticket displays two things automatically: the client's intake information, and that client's past build history, pulled by looking up their Discord ID against prior closed cases (equivalent to a manual `!buildlogs @client` lookup). Whoever claims the case already has full context before they say a word.
 
+The bot also asks the client one question with a dropdown: how they found BSCH (advertisement, a friend, partnership post, Disboard, Discadia, somewhere else). Each person is only ever asked once, whether they arrive through a hire ticket, a support ticket or an application, and the answers feed the live panel described under Bot Settings.
+
 ### Step 2 - Claiming
 
 The first embed carries a **Claim** button. Any Builder may claim an unclaimed case - no availability toggle or pre-qualification step, since BSCH's builder pool is small and scoped entirely to SCP roleplay builds. When a Builder clicks Claim, the bot edits that same first embed in place to add a roster section showing that Builder as **Lead**. The identical roster embed state is mirrored into the case file post at the same moment.
@@ -87,14 +91,26 @@ The first embed carries a **Claim** button. Any Builder may claim an unclaimed c
 
 Additional Builders join a case themselves, at will, by running `/addtocase` inside the ticket - no approval step; running the command in a valid ticket channel is sufficient. A Builder is removed from the roster via `/removefromcase`, run by the Lead. The roster embed updates in both locations exactly as it did on claim.
 
-There is no fixed script of questions a Lead must ask a client - every case is different. Whenever a client's answer needs to be captured as a permanent requirement, the Builder runs `/extrainfo [text]`. Each use appends a new, numbered "Extra Info" field to the case embed (Extra Info #1, #2, #3...) in both the ticket and the case file post - a running, ordered list of everything the client has asked for, in the order it was captured.
+There is no fixed script of questions a Lead must ask a client - every case is different. Whenever a client's answer needs to be captured as a permanent requirement, the Builder types `!inject [text]` straight into the ticket. Each use appends a new, numbered "Extra Info" field to the case embed (Extra Info #1, #2, #3...) in both the ticket and the case file post - a running, ordered list of everything the client has asked for, in the order it was captured.
+
+Requirements change, so two more chat commands keep the list honest:
+
+- `!sub [number] [text]` rewords that entry, for when the client changes their mind.
+- `!sub [number]` on its own removes it.
+
+**Numbers never shift.** A removed entry stays where it is, struck through and marked removed, so "number 3" said in the ticket a week ago still means number 3 today. Rewording a removed entry brings it back.
 
 ### Step 4 - Contract
 
-When the Lead is ready to move forward, they run `/contract`. BSCH maintains exactly one hiring contract - no version-numbering system. The bot sends the current contract text as an embed with two buttons, **Accept** and **Decline**, and that exact text is snapshotted into the case's record at the moment it's sent, so if the master contract is edited later, this case is unaffected and continues to reference the terms it was actually shown.
+When the Lead is ready to move forward, they run `/contract`. BSCH maintains exactly one hiring contract, carried in the bot itself and marked with a version (currently v1.0). The bot sends the contract text and that exact text is snapshotted into the case's record at the moment it's sent, so if the master contract is edited later, this case is unaffected and continues to reference the terms it was actually shown.
 
-- **Accept:** the bot posts "Contract Accepted" as a message in the ticket and logs the acceptance timestamp to both the ticket embed and the case file post.
+The client gets three buttons, because accepting also answers the template bank question in section 5 of the contract:
+
+- **Accept - you may reuse my build:** the contract is accepted and the client's consent to the template bank is recorded on the case.
+- **Accept - don't reuse my build:** the contract is accepted and the case is marked as never to be copied.
 - **Decline:** the bot presents a short form asking their reason, logs it to the case file post, and closes the ticket - a declined case does not proceed further.
+
+Either Accept posts "Contract Accepted" in the ticket, logs the timestamp to both the ticket embed and the case file post, and then offers a **voice channel** for the build. If the client or the Lead says yes, the bot creates `hire-vc-[ticketid]` directly under the ticket, visible to the same people, and deletes it when the case closes.
 
 ### Step 5 - Server Access & Build Start
 
@@ -111,15 +127,23 @@ When the build is complete, the Lead runs `/buildfinished`. This immediately pin
 
 After the client has responded, the Builder files `/paperwork` - a slash command, not a modal, since Discord modals cannot accept file attachments. Server name, screenshots, and any other closing details are supplied as command parameters directly, with images attached the same way any file is attached to a slash command. This step is independent of the roster; it does not re-derive or auto-fill builder credit from roster data.
 
+`/paperwork` also carries a **showcase** option. Ticking it posts the same photos to the showcase channel, credited to everyone on the case roster. Left alone, the photos stay in the ticket and the case file.
+
 ### Step 8 - Template Bank Consideration
 
-Once paperwork is filed, the bot pings the Lead asking whether this build is worth preserving in BSCH's reusable template bank. If the Lead says yes, the bot then pings the client with an explanatory embed asking their consent to have their design reused in future projects. Only if the client also agrees does the bot ping a Builder to go copy the server into BSCH's database. A no at either checkpoint - Lead or client - simply skips the copy; nothing else in the flow depends on this outcome. There is no separate command to confirm the copy was completed - `/copyphasedone` (Step 9) covers both closing out this decision and confirming the copy is done, whichever applies.
+Once paperwork is filed, the bot pings the Lead asking whether this build is worth preserving in BSCH's reusable template bank. The client's side of this was already answered when they accepted the contract, so the bot does not ask them again:
+
+- **Lead says yes and the client allowed copying:** the bot pings a Builder to go copy the server into BSCH's database with `/copyserver`, run inside the client's server.
+- **Lead says yes but the client said no on the contract:** nothing is copied, and the ticket says so.
+- **Lead says no:** nothing is copied.
+
+Nothing else in the flow depends on this outcome. There is no separate command to confirm the copy was completed - `/copyphasedone` (Step 9) covers both closing out this decision and confirming the copy is done, whichever applies.
 
 ### Step 9 - Close
 
 Regardless of which way the template-bank decision went, the Lead (or the Builder who performed the copy) runs `/copyphasedone` to close out this stage. The bot then sends one final embed to the client: a reminder to revoke BSCH's admin access from their server, a pointer to the help desk, the donation link, and a final question - is it clear to close the ticket?
 
-- **Yes:** the bot closes the ticket and writes the completed case to its final state in the case file post.
+- **Yes:** the bot closes the ticket and writes the completed case to its final state in the case file post. The transcript is posted to the transcripts channel and attached to the forum case file, the case's voice channel is deleted, and the ticket channel is renamed `closed-...`, moved to the **archived** category and locked so it can still be read.
 - **No:** the bot does not close the ticket - instead it asks the client what they need before closing, and the ticket stays open until that's resolved.
 
 Nothing about this service requires payment at any stage; the donation link is offered once, here, and is entirely optional.
@@ -130,12 +154,17 @@ Nothing about this service requires payment at any stage; the donation link is o
 | --- | --- | --- |
 | `/addtocase` | Any Builder | Self-adds the Builder to the case roster. No approval required. |
 | `/removefromcase` | Lead | Removes a Builder from the case roster. |
-| `/extrainfo [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
-| `/contract` | Lead | Sends the current hiring contract with Accept/Decline buttons; snapshots the text into the case. |
+| `!inject [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
+| `!sub [number] [text]` | Builder on the case | Rewords that Extra Info entry. With no text, removes it (struck through, number kept). |
+| `/contract` | Lead | Sends the hiring contract with two Accept buttons (reuse allowed or not) and Decline; snapshots the text and version into the case. |
 | `/admingranted` | Builder on the case | Confirms server access was granted; also marks the build as started. |
 | `/buildfinished` | Lead | Marks the build complete; triggers the client rating/review ping. |
-| `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters. |
+| `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters, and optionally posts the photos to the showcase channel. |
 | `/copyphasedone` | Lead, or the Builder who performed the copy | Closes out the template-bank decision (and confirms the copy is done, if applicable); triggers the final close-out embed. |
+| `/copyserver [name] [description]` | Builder, run in the client's server | Saves that server's channels and roles into the template bank and logs it in the BSCH template-log forum. |
+| `/pasteserver [name]` | Builder, run in the server being built | Rebuilds a saved template's channels and roles in that server. |
+| `/closecase [reason]` | Lead or Senior Staff | Closes a case early, archiving the ticket the same way a normal close does. |
+| `/delete` | Head Staff | Deletes the channel it is run in, for archived tickets that shouldn't wait out the archive timer. |
 | `!buildlogs @client` | Any staff | Pulls a client's full case history from hire-bsch-case-logs. Also runs automatically on new-case intake. |
 
 ### Exceptions & Edge Cases - Hiring
@@ -146,6 +175,7 @@ Nothing about this service requires payment at any stage; the donation link is o
 - **Disputes:** any disagreement between the Lead and a helper Builder on the same case that can't be resolved between them is escalated to Senior Staff, who make the final call.
 - **Senior Staff override:** Senior Staff may force-claim or reassign a stuck case at any time, independent of the 24h/48h claim timers.
 - **Roster visibility:** the current roster for a case is viewable by the client or any staff member at any time, not just at claim or add/remove moments.
+- **Archived tickets:** a closed ticket is not deleted. It moves to the **archived** category, locked but readable, and the bot deletes it after 7 days of no messages. Head Staff can delete one sooner with `/delete`. The forum case file is the permanent record either way.
 
 ---
 
@@ -155,7 +185,7 @@ Support tickets are informal by design. No fixed resolution procedure, no requir
 
 Support tickets exist entirely separately from **Hire BSCH** (Section 1). Nothing opened here creates a case, generates a ticket ID for the hiring flow, or posts to hire-bsch-case-logs. If a support ticket turns into an actual hire request, staff should direct the member to open a new ticket through the hire-us entry point rather than continuing the work in place.
 
-Support tickets are opened through the **help-desk** channel and fall into three categories. Each support ticket channel is named `[type]-[clientuser]` (e.g. `general-coolbeanz`, `bugreport-coolbeanz`) - no ticket ID is included, since only hire tickets carry one.
+Support tickets are opened through the **help-desk** channel and fall into three categories. Each support ticket channel is named `[type]-[clientuser]` (e.g. `general-coolbeanz`, `bugreport-coolbeanz`) - no ticket ID is included, since only hire tickets carry one. Each type opens in its own category: general support, server build help, and bug reports, with hire cases in a fourth. Closing a support ticket saves the transcript and moves the channel to the **archived** category, the same as a hire ticket.
 
 ### General Questions
 
@@ -353,7 +383,21 @@ A staff member should not claim or lead a case for a client they have an undiscl
 
 ### Consequences
 
-Expectation violations are tracked the same way infractions are tracked elsewhere in the server (see the **infractions** channel under Staff | Info). Repeated or serious violations are escalated to Head Staff and can result in rank changes, up to and including removal from staff, following whatever process is defined for rank-change decisions.
+Expectation violations are tracked the same way infractions are tracked elsewhere in the server (see the **infractions** channel under Staff | Info). Repeated or serious violations are escalated to Head Staff and can result in rank changes, up to and including removal from staff.
+
+### Rank & Record Commands
+
+Every command in this section is Head Staff and above. Each one messages the member it affects, so nobody finds out from a role change alone.
+
+| Command | Run by | Effect |
+| --- | --- | --- |
+| `/promote [member] [rank] [reason]` | Head Staff | Gives the rank, adds Staff Team, removes Trainee, and posts it in promotions. |
+| `/demote [member] [rank] [reason]` | Head Staff | Takes that rank away and posts it in promotions. |
+| `/infract [member] [level] [reason]` | Head Staff | Files a verbal, written or final warning on the member's staff record and posts it in infractions. |
+| `/suspend [member] [days] [reason]` | Head Staff | Removes their staff roles for a set number of days. The bot hands back exactly the roles it took, on its own, when the time is up. |
+| `/fire [member] [reason]` | Head Staff | Removes every staff role, hands back Member, and logs it. |
+
+A demotion targets one rank at a time, so someone in both departments keeps the department they aren't being demoted from. If the bot can't move a role it says so: that means the role sits above the bot's own role in the server's role list, and the bot's role has to be dragged higher.
 
 ---
 
@@ -385,7 +429,11 @@ Section 1 (Hiring SOP) references Senior Staff for dispute arbitration and claim
 
 ### Bot Settings
 
-Senior Staff change the bot's channels, categories, roles, timers, donation link and contract with `/config`. Pick a setting (it autocompletes), then give the matching channel, role, number or text. Running `/config` with no setting shows every current value. Changes apply immediately, with no restart.
+Senior Staff change the bot's channels, categories, roles and timers with `/config`. Pick a setting (it autocompletes), then give the matching channel, role, number or text. Running `/config` with no setting shows every current value. Changes apply immediately, with no restart.
+
+The hiring contract is not a setting: it lives in the bot's own `contract.js` file and carries a version number, so changing it is a code change that gets pushed like any other.
+
+`/postpanel [panel]` posts a panel into the status panel channel, or into a channel you name. Two panels exist: **How people found BSCH**, which draws the answers to the dropdown clients get when they open a ticket or an application and redraws itself every time someone answers, and **Staff SOP**, which links this document. Posting a panel again replaces the old copy rather than leaving two.
 
 ---
 
@@ -396,7 +444,7 @@ Senior Staff change the bot's channels, categories, roles, timers, donation link
 - **hire-bsch-case-logs** (also called **hire-bsch-files**) - the forum channel where every hire case gets its own forum post acting as that case's permanent, structured record.
 - **Lead** - the Builder who claimed a case; the primary point of contact and decision-maker for that case (e.g. runs `/contract`, `/buildfinished`, `/copyphasedone`).
 - **Roster** - the list of Builders working a case (Lead plus any self-added helpers), used for tracking who worked on what and for future quota tracking.
-- **Extra Info** - a numbered field on a case record capturing a specific client requirement, logged via `/extrainfo` as it comes up in conversation.
+- **Extra Info** - a numbered field on a case record capturing a specific client requirement, logged with `!inject` as it comes up in conversation, reworded or removed with `!sub`. Numbers never change, so a removed entry stays in place struck through.
 - **Template bank** - BSCH's internal database of past builds that can be reused for future clients, only added to with both Lead and client consent.
 - **Senior Staff** - Head Staff and above (Head Staff, Admin, Co-Owner, Owner). Authorized to override claims, arbitrate disputes, and force-reassign stuck cases.
 - **Trainee** - a staff applicant who has been accepted but has not yet passed their drill; holds limited permissions until promoted.
@@ -406,6 +454,9 @@ Senior Staff change the bot's channels, categories, roles, timers, donation link
 - **Wick** - the third-party moderation bot used for all moderation actions (warns, mutes, kicks, bans, raid protection); not the custom BSCH bot.
 - **application-approval** - the forum channel where finished applications are posted for Senior Staff to approve or deny.
 - **drill-results** - the channel where every drill's Pass/Fail outcome and reason is posted.
+- **Archived category** - where closed tickets go instead of being deleted. Locked but readable, cleared by the bot after 7 quiet days.
+- **Showcase channel** - where finished build photos are posted, when the Builder ticks the showcase option on `/paperwork`.
+- **Status panel channel** - where live bot-maintained panels live, posted with `/postpanel`.
 - **!buildlogs @client** - command that pulls a client's full case history from hire-bsch-case-logs.
 - **Mod mail** - the bot-based reporting/appeals system, separate from tickets, used for reporting members, reporting staff (to Head Staff), and appealing moderation actions.
 
@@ -413,7 +464,7 @@ Senior Staff change the bot's channels, categories, roles, timers, donation link
 
 ## Ending
 
-This document is BSCH's Staff Standard Operating Procedures, version 4 of the client hiring flow specifically, with Support, Moderation, Onboarding, Expectations, and Contacts and Help all written out alongside it.
+This document is BSCH's Staff Standard Operating Procedures, version 5 of the client hiring flow specifically, with Support, Moderation, Onboarding, Expectations, and Contacts and Help all written out alongside it.
 
 This is a living document. As BSCH's process changes, this file should change with it - a stale SOP is worse than none, since staff will trust it by default. Anyone on staff who spots something here that no longer matches reality should raise it in staff-chat rather than quietly working around it.
 
