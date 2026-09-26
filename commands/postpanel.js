@@ -1,17 +1,27 @@
 const { SlashCommandBuilder, ChannelType } = require('discord.js');
-const stats = require('../stats/store');
+const panels = require('../stats/panels');
 const { buildPanelEmbed } = require('../handlers/referralhandler');
+const { buildStatusEmbed } = require('../handlers/statuspanel');
 const { isSenior } = require('../handlers/hiringhandler');
 
-// Posts a panel into the status panel channel, or into a channel you name.
+// Posts a panel into its home channel, or into a channel you name.
 // Add new panels to PANELS and they show up as choices automatically.
+//
+// tracked: the bot keeps editing this message, so only one may exist at a time.
 
 const PANELS = {
-  referrals: {
-    label: 'How people found BSCH',
-    // Tracked, because this one redraws itself whenever someone answers
+  status: {
+    label: 'Live status',
     tracked: true,
     channelKey: 'statusPanelChannel',
+    note: 'It refreshes every 15 minutes.',
+    build: (config, client, guild) => buildStatusEmbed(client, config, guild),
+  },
+  referrals: {
+    label: 'How people found BSCH',
+    tracked: true,
+    channelKey: 'statusPanelChannel',
+    note: 'It updates itself whenever someone answers.',
     build: () => buildPanelEmbed(),
   },
   sop: {
@@ -37,12 +47,12 @@ const PANELS = {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('postpanel')
-    .setDescription('Post a panel into the status panel channel (Senior Staff).')
+    .setDescription('Post a panel into its channel (Senior Staff).')
     .addStringOption(o =>
       o.setName('panel').setDescription('Which panel to post').setRequired(true)
         .addChoices(...Object.entries(PANELS).map(([value, p]) => ({ name: p.label, value }))))
     .addChannelOption(o =>
-      o.setName('channel').setDescription('Post it here instead of the status panel channel').setRequired(false)
+      o.setName('channel').setDescription('Post it here instead of its usual channel').setRequired(false)
         .addChannelTypes(ChannelType.GuildText)),
 
   async execute(interaction, client, config) {
@@ -52,6 +62,7 @@ module.exports = {
 
     const key = interaction.options.getString('panel');
     const panel = PANELS[key];
+
     // Each panel has a home channel; naming one in the command wins
     const channel = interaction.options.getChannel('channel')
       || interaction.guild.channels.cache.get(config.channels[panel.channelKey])
@@ -61,16 +72,16 @@ module.exports = {
       return interaction.reply({ content: `❌ No home channel set for **${panel.label}**. Set it with \`/config\`, or name a channel in this command.`, flags: 64 });
     }
 
-    const embed = panel.build(config);
+    const embed = panel.build(config, client, interaction.guild);
     if (!embed) {
       return interaction.reply({ content: '❌ No SOP link saved yet. Add it with `/config` (**Staff SOP document link**).', flags: 64 });
     }
 
     await interaction.deferReply({ flags: 64 });
 
-    // The live panel only ever exists once, so take down the old copy first
+    // A live panel only ever exists once, so take down the old copy first
     if (panel.tracked) {
-      const old = stats.getPanel();
+      const old = panels.get(key);
       if (old.messageId && old.channelId) {
         const oldChannel = await interaction.guild.channels.fetch(old.channelId).catch(() => null);
         const oldMessage = oldChannel ? await oldChannel.messages.fetch(old.messageId).catch(() => null) : null;
@@ -83,11 +94,10 @@ module.exports = {
       return interaction.editReply({ content: `❌ I couldn't post in ${channel}. Check my permissions there.` });
     }
 
-    if (panel.tracked) stats.setPanel(channel.id, message.id);
+    if (panel.tracked) panels.set(key, channel.id, message.id);
 
     return interaction.editReply({
-      content: `✅ **${panel.label}** posted in ${channel}.` +
-        (panel.tracked ? ' It updates itself whenever someone answers.' : ''),
+      content: `✅ **${panel.label}** posted in ${channel}.` + (panel.note ? ` ${panel.note}` : ''),
     });
   },
 };

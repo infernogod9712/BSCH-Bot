@@ -4,6 +4,7 @@
 
 const { ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 const stats = require('../stats/store');
+const panels = require('../stats/panels');
 
 const BAR_WIDTH = 12;
 
@@ -65,7 +66,7 @@ function buildPanelEmbed() {
 
 // Re-draw the panel message. Silently does nothing if it was deleted.
 async function refreshPanel(guild, config) {
-  const { channelId, messageId } = stats.getPanel();
+  const { channelId, messageId } = panels.get('referrals');
   if (!guild || !channelId || !messageId) return;
   const channel = await guild.channels.fetch(channelId).catch(() => null);
   if (!channel) return;

@@ -433,7 +433,19 @@ Senior Staff change the bot's channels, categories, roles and timers with `/conf
 
 The hiring contract is not a setting: it lives in the bot's own `contract.js` file and carries a version number, so changing it is a code change that gets pushed like any other.
 
-`/postpanel [panel]` posts a panel into that panel's home channel, or into a channel you name. Two panels exist: **How people found BSCH**, which lives in the status panel channel, draws the answers to the dropdown clients get when they open a ticket or an application, and redraws itself every time someone answers; and **Staff SOP**, which lives in the SOP channel and links this document. Posting a panel again replaces the old copy rather than leaving two.
+`/postpanel [panel]` posts a panel into that panel's home channel, or into a channel you name. Posting a panel again replaces the old copy rather than leaving two. Three panels exist:
+
+- **Live status** (status panel channel) - every open hire case and the phase it's on, drills in progress, applications being filled in, applications awaiting approval, open mod mail, and counts for unclaimed cases, open support tickets, archived tickets waiting to be deleted and bot uptime. Refreshes every 15 minutes.
+- **How people found BSCH** (status panel channel) - the answers to the dropdown clients get when they open a ticket or an application. Redraws itself every time someone answers.
+- **Staff SOP** (SOP channel) - links this document.
+
+### Owner Commands
+
+A few chat commands run the bot itself, locked to the roles in the **Ownership roles** setting (Owner and Co-Owner). To anyone else they do nothing at all, without a reply.
+
+- `d!restart` - restarts the bot. PM2 brings it straight back, so it's back within seconds.
+- `d!status` - uptime, memory, ping, commands loaded and open case count, without opening the Pi.
+- `d!dev` - lists these.
 
 ---
 

@@ -15,6 +15,7 @@ const OVERRIDES_PATH = path.join(process.env.BSCH_DATA_DIR || path.join(__dirnam
 // Settings that newer code expects. Added to the live config if missing.
 const DEFAULTS = {
   channels: { drillRequestChannel: '', showcaseChannel: '', statusPanelChannel: '', sopChannel: '' },
+  roles: { ownership: [] },
   categories: { generalTickets: '', bugTickets: '', buildHelpTickets: '', archive: '' },
   timers: { drillBuildDeadlineDays: 5, archiveDeleteDays: 7 },
   links: { sopDoc: '' },
@@ -56,6 +57,7 @@ const SETTINGS = {
   'roles.trainee': { type: 'role', label: 'Trainee role' },
   'roles.member': { type: 'role', label: 'Member role' },
   'staffRoles': { type: 'roleList', label: 'Staff roles (pick a role to add or remove it)' },
+  'roles.ownership': { type: 'roleList', label: 'Ownership roles (d! owner commands)' },
   'timers.claimPingHours': { type: 'number', label: 'Hours before unclaimed cases ping Builders' },
   'timers.claimAutoCloseHours': { type: 'number', label: 'Hours before unclaimed cases close' },
   'timers.clientInactivityHours': { type: 'number', label: 'Hours before an inactive client is pinged' },

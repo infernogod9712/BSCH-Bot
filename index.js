@@ -14,6 +14,8 @@ const modmailHandler = require('./handlers/modmailhandler');
 const applicationHandler = require('./handlers/applicationhandler');
 const referralHandler = require('./handlers/referralhandler');
 const extraInfoHandler = require('./handlers/extrainfohandler');
+const devHandler = require('./handlers/devhandler');
+const { refreshStatusPanel } = require('./handlers/statuspanel');
 const store = require('./hire/store');
 const { sweepDrills } = require('./onboarding/drills');
 const { sweepArchive } = require('./handlers/archive');
@@ -125,6 +127,9 @@ client.on('messageCreate', async (message) => {
     });
   }
 
+  // d!… — owner-only commands for running the bot itself
+  if (await devHandler.handleMessage(message, client, config).catch(() => false)) return;
+
   // !inject / !sub — add, reword or remove an Extra Info entry on this case
   if (await extraInfoHandler.handleMessage(message, client, config).catch(() => false)) return;
 
@@ -172,6 +177,8 @@ async function sweepCases() {
     await sweepArchive(guild, config).catch(e => console.error('sweepArchive error:', e));
     // Staff suspensions that have run their course
     await sweepSuspensions(guild, config).catch(e => console.error('sweepSuspensions error:', e));
+    // Redraw the live status panel
+    await refreshStatusPanel(guild, client, config).catch(e => console.error('status panel error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim/inactivity timers
