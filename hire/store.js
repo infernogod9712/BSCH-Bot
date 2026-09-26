@@ -12,12 +12,32 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const CASES_PATH = path.join(DATA_DIR, 'cases.json');
 
 // Read the whole store. If the file doesn't exist yet, start fresh.
+// The file used to be a plain map of cases with no counter. Read either shape
+// so an old file can't take the timers down or hand out NaN ticket ids.
 function readData() {
+  let raw;
   try {
-    return JSON.parse(fs.readFileSync(CASES_PATH, 'utf-8'));
+    raw = JSON.parse(fs.readFileSync(CASES_PATH, 'utf-8'));
   } catch {
     return { counter: 0, cases: {} };
   }
+  if (!raw || typeof raw !== 'object') return { counter: 0, cases: {} };
+
+  const cases = raw.cases && typeof raw.cases === 'object' ? raw.cases : raw;
+  // Old records kept the id only as the key
+  for (const [id, record] of Object.entries(cases)) {
+    if (record && typeof record === 'object' && record.ticketId === undefined) record.ticketId = id;
+  }
+  const highest = Object.keys(cases)
+    .map(id => parseInt(id, 10))
+    .filter(n => Number.isFinite(n))
+    .reduce((a, b) => Math.max(a, b), 0);
+
+  return {
+    counter: Number.isFinite(raw.counter) ? Math.max(raw.counter, highest) : highest,
+    drillCounter: Number.isFinite(raw.drillCounter) ? raw.drillCounter : 0,
+    cases,
+  };
 }
 
 // Write the whole store back to disk (creates data/ if missing).

@@ -435,7 +435,7 @@ The hiring contract is not a setting: it lives in the bot's own `contract.js` fi
 
 `/postpanel [panel]` posts a panel into that panel's home channel, or into a channel you name. Posting a panel again replaces the old copy rather than leaving two. Three panels exist:
 
-- **Live status** (status panel channel) - every open hire case and the phase it's on, drills in progress, applications being filled in, applications awaiting approval, open mod mail, and counts for unclaimed cases, open support tickets, archived tickets waiting to be deleted and bot uptime. Refreshes every 15 minutes.
+- **Live status** (status panel channel) - every open hire case and the phase it's on, drills in progress, applications being filled in, applications awaiting approval, open mod mail, and counts for unclaimed cases, open support tickets, archived tickets waiting to be deleted and bot uptime. Refreshes every 2 minutes.
 - **How people found BSCH** (status panel channel) - the answers to the dropdown clients get when they open a ticket or an application. Redraws itself every time someone answers.
 - **Staff SOP** (SOP channel) - links this document.
 

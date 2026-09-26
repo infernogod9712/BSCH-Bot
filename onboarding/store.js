@@ -11,11 +11,18 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'onboarding.json');
 
 function readData() {
+  let raw;
   try {
-    return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
+    raw = JSON.parse(fs.readFileSync(FILE, 'utf-8'));
   } catch {
-    return { applications: {}, drills: {}, cooldowns: {} };
+    raw = null;
   }
+  if (!raw || typeof raw !== 'object') raw = {};
+  return {
+    applications: raw.applications || {},
+    drills: raw.drills || {},
+    cooldowns: raw.cooldowns || {},
+  };
 }
 
 function writeData(data) {

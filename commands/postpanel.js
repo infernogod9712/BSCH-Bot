@@ -14,7 +14,7 @@ const PANELS = {
     label: 'Live status',
     tracked: true,
     channelKey: 'statusPanelChannel',
-    note: 'It refreshes every 15 minutes.',
+    note: 'It refreshes every 2 minutes.',
     build: (config, client, guild) => buildStatusEmbed(client, config, guild),
   },
   referrals: {

@@ -177,8 +177,6 @@ async function sweepCases() {
     await sweepArchive(guild, config).catch(e => console.error('sweepArchive error:', e));
     // Staff suspensions that have run their course
     await sweepSuspensions(guild, config).catch(e => console.error('sweepSuspensions error:', e));
-    // Redraw the live status panel
-    await refreshStatusPanel(guild, client, config).catch(e => console.error('status panel error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim/inactivity timers
@@ -260,6 +258,14 @@ client.once('clientReady', async () => {
   // Check the timers every 15 minutes (first run shortly after startup)
   setTimeout(sweepCases, 30 * 1000);
   setInterval(sweepCases, 15 * 60 * 1000);
+
+  // Keep the live status panel current on its own, faster clock
+  const redrawStatus = () => {
+    const guild = client.guilds.cache.get(config.guildId);
+    if (guild) refreshStatusPanel(guild, client, config).catch(e => console.error('status panel error:', e));
+  };
+  setTimeout(redrawStatus, 20 * 1000);
+  setInterval(redrawStatus, 2 * 60 * 1000);
 });
 
 // ---- Start the bot ----

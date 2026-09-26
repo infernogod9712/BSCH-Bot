@@ -16,11 +16,14 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'modmail.json');
 
 function readData() {
+  let raw;
   try {
-    return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
+    raw = JSON.parse(fs.readFileSync(FILE, 'utf-8'));
   } catch {
-    return { sessions: {} };
+    raw = null;
   }
+  if (!raw || typeof raw !== 'object') raw = {};
+  return { sessions: raw.sessions || {} };
 }
 
 function writeData(data) {

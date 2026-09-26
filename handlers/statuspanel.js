@@ -1,7 +1,7 @@
 // handlers/statuspanel.js
 // The live "what's happening right now" panel: every open case and what phase
 // it's on, drills, applications, mod mail, and how long the bot has been up.
-// Posted with /postpanel and redrawn on the 15-minute sweep.
+// Posted with /postpanel and redrawn every 2 minutes.
 
 const hireStore = require('../hire/store');
 const onboarding = require('../onboarding/store');
@@ -115,7 +115,7 @@ function buildStatusEmbed(client, config, guild) {
           `Bot uptime: **${uptime(client)}**`,
       },
     ],
-    footer: { text: 'Refreshes every 15 minutes, and whenever the bot restarts.' },
+    footer: { text: 'Refreshes every 2 minutes.' },
     timestamp: new Date().toISOString(),
   };
 }
