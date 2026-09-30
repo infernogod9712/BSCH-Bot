@@ -1,9 +1,9 @@
 {
   "_comment": "Edit these and push. The site rebuilds itself. Leave reviews empty until real ones come in from the bot's rating step.",
-  "serversBuilt": 0,
+  "serversBuilt": 3,
   "builders": 6,
   "claimHours": 24,
-  "rating": "--",
+  "rating": "8.6",
   "discord": "https://discord.gg/tduZtM6vZT",
   "reviews": [],
   "discordApply": "https://discord.gg/CzfYAquUXE"
