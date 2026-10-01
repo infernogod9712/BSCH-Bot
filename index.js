@@ -293,7 +293,10 @@ startAutoSync(
   }).then(r => r.json()).then(app => app.flags || 0).catch(() => 0);
 
   if (flags & MEMBERS_INTENT) {
-    client.options.intents.add(GatewayIntentBits.GuildMembers);
+    // discord.js freezes the intents when the client is made, so .add() hands
+    // back a new copy instead of changing it. Swap the copy in; the connection
+    // reads this at login.
+    client.options.intents = client.options.intents.add(GatewayIntentBits.GuildMembers);
   } else {
     console.warn('Server Members Intent is off in the developer portal, so /drillserverreset cannot kick anyone.');
   }

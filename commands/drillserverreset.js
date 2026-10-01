@@ -78,8 +78,9 @@ module.exports = {
   // to remember the number.
   async autocomplete(interaction) {
     const typed = String(interaction.options.getFocused() || '').toLowerCase();
+    // Finished drills are left out, or the list fills up with old ones
     const drills = hireStore.getAllCases()
-      .filter(c => c.drill && /^D\d+$/.test(String(c.ticketId)))
+      .filter(c => c.drill && c.status !== 'closed' && /^D\d+$/.test(String(c.ticketId)))
       .sort((a, b) => Number(String(b.ticketId).slice(1)) - Number(String(a.ticketId).slice(1)));
 
     // Drills started before names were saved: look them up once (quickly,
@@ -100,8 +101,7 @@ module.exports = {
     const choices = drills
       .map(c => {
         const name = c.traineeName || 'unknown trainee';
-        const state = c.status === 'closed' ? 'finished' : 'in progress';
-        return { name: `${c.ticketId} - ${name} (${state})`.slice(0, 100), value: Number(String(c.ticketId).slice(1)) };
+        return { name: `${c.ticketId} - ${name}`.slice(0, 100), value: Number(String(c.ticketId).slice(1)) };
       })
       .filter(choice => choice.name.toLowerCase().includes(typed))
       .slice(0, 25);
