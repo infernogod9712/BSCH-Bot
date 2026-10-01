@@ -282,4 +282,21 @@ startAutoSync(
   { onBeforeRestart: async () => { await client.destroy(); } },
 ).catch(e => console.error('git-sync failed to start:', e.message));
 
-client.login(token);
+// The member list (needed by /drillserverreset to kick people) needs the
+// Server Members Intent. Asking for it while it's off in the developer portal
+// makes Discord refuse the login outright, which would take the whole bot
+// down. So ask Discord first, and only request it if it's switched on.
+(async () => {
+  const MEMBERS_INTENT = (1 << 14) | (1 << 15);   // full, or the limited version
+  const flags = await fetch('https://discord.com/api/v10/applications/@me', {
+    headers: { Authorization: `Bot ${token}` },
+  }).then(r => r.json()).then(app => app.flags || 0).catch(() => 0);
+
+  if (flags & MEMBERS_INTENT) {
+    client.options.intents.add(GatewayIntentBits.GuildMembers);
+  } else {
+    console.warn('Server Members Intent is off in the developer portal, so /drillserverreset cannot kick anyone.');
+  }
+
+  client.login(token);
+})();

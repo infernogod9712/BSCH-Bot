@@ -358,6 +358,7 @@ When the scenario concludes, the Head runs `/drillend [result] [reason]`. Result
 | `/drillstart [department] [trainee] [client] [helpers]` | Head | Creates a `[team]-drill-[traineeuser]` ticket and begins the simulated scenario. The running Head is the evaluator. |
 | `/drillsubmitbuild [link] [notes]` | Builder Trainee | Hands in the drill build and pings the Head to grade it. Without it, a builder drill fails after 5 days. |
 | `/drillend [result] [reason]` | Head | Closes the drill with a Pass/Fail result and reason, posted to drill-results. Pass auto-promotes; Fail applies a 1-week cooldown. |
+| `/drillserverreset [drill]` | Drill supervisor, in the drill server only | Wipes the drill server for the next builder drill after a confirm button: kicks everyone without the drill supervisor role (bots included), deletes every role, channel and category except the supervisor, bot, trainee audit and divider roles and the temp channel, empties the temp channel except pinned messages, and renames the server to `Drill #01 - Username` for that drill. |
 
 ---
 
