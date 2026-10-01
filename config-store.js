@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const dataFile = require('./data-file');
 
 const BASE_PATH = path.join(__dirname, 'config.json');
 const OVERRIDES_PATH = path.join(process.env.BSCH_DATA_DIR || path.join(__dirname, 'data'), 'config-overrides.json');
@@ -107,7 +108,16 @@ function load() {
     throw new Error('config.json is missing or is not valid JSON. Fix it before starting the bot.');
   }
   backfill(config, DEFAULTS);
-  const overrides = readJson(OVERRIDES_PATH, {});
+
+  // A broken overrides file must not stop the bot starting, but it also must
+  // not be treated as empty: the next /config would save over every setting.
+  // So start on config.json alone and let /config refuse until it's fixed.
+  let overrides = {};
+  try {
+    overrides = dataFile.readJson(OVERRIDES_PATH, () => ({}));
+  } catch {
+    console.error('[config] Running on config.json alone until config-overrides.json is fixed.');
+  }
   for (const [key, value] of Object.entries(overrides)) {
     if (SETTINGS[key]) setPath(config, key, value);
   }
@@ -115,11 +125,11 @@ function load() {
 }
 
 function set(config, key, value) {
-  setPath(config, key, value);
-  const overrides = readJson(OVERRIDES_PATH, {});
+  // Throws if the overrides file can't be read, instead of overwriting it
+  const overrides = dataFile.readJson(OVERRIDES_PATH, () => ({}));
   overrides[key] = value;
-  fs.mkdirSync(path.dirname(OVERRIDES_PATH), { recursive: true });
-  fs.writeFileSync(OVERRIDES_PATH, JSON.stringify(overrides, null, 2));
+  dataFile.writeJson(OVERRIDES_PATH, overrides);
+  setPath(config, key, value);
 }
 
 module.exports = { SETTINGS, load, set, getPath };

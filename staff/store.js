@@ -4,21 +4,17 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readJson, writeJson } = require('../data-file');
 
 const DATA_DIR = process.env.BSCH_DATA_DIR || path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'staff.json');
 
 function readData() {
-  try {
-    return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
-  } catch {
-    return { infractions: {}, suspensions: {} };
-  }
+  return readJson(FILE, () => ({ infractions: {}, suspensions: {} }));
 }
 
 function writeData(data) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+  writeJson(FILE, data);
 }
 
 function addInfraction(userId, entry) {

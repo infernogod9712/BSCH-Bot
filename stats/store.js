@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readJson, writeJson } = require('../data-file');
 
 const DATA_DIR = process.env.BSCH_DATA_DIR || path.join(__dirname, '..', 'data');
 const FILE = path.join(DATA_DIR, 'stats.json');
@@ -19,16 +20,11 @@ const SOURCES = {
 };
 
 function readData() {
-  try {
-    return JSON.parse(fs.readFileSync(FILE, 'utf-8'));
-  } catch {
-    return { answers: {}, panelMessageId: null, panelChannelId: null };
-  }
+  return readJson(FILE, () => ({ answers: {}, panelMessageId: null, panelChannelId: null }));
 }
 
 function writeData(data) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+  writeJson(FILE, data);
 }
 
 function hasAnswered(userId) {

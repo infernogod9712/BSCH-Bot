@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { readJson, writeJson } = require('../data-file');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 const CASES_PATH = path.join(DATA_DIR, 'cases.json');
@@ -15,12 +16,9 @@ const CASES_PATH = path.join(DATA_DIR, 'cases.json');
 // The file used to be a plain map of cases with no counter. Read either shape
 // so an old file can't take the timers down or hand out NaN ticket ids.
 function readData() {
-  let raw;
-  try {
-    raw = JSON.parse(fs.readFileSync(CASES_PATH, 'utf-8'));
-  } catch {
-    return { counter: 0, cases: {} };
-  }
+  // A file that won't parse throws here rather than reading as empty,
+  // so a hand-editing mistake can't get every case overwritten
+  const raw = readJson(CASES_PATH, () => null);
   if (!raw || typeof raw !== 'object') return { counter: 0, cases: {} };
 
   const cases = raw.cases && typeof raw.cases === 'object' ? raw.cases : raw;
@@ -42,8 +40,7 @@ function readData() {
 
 // Write the whole store back to disk (creates data/ if missing).
 function writeData(data) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.writeFileSync(CASES_PATH, JSON.stringify(data, null, 2));
+  writeJson(CASES_PATH, data);
 }
 
 // Create a new case. Bumps the counter to make a fresh ticketId, stamps in
