@@ -154,6 +154,7 @@ Nothing about this service requires payment at any stage; the donation link is o
 | --- | --- | --- |
 | `/addtocase` | Any Builder | Self-adds the Builder to the case roster. No approval required. |
 | `/removefromcase` | Lead | Removes a Builder from the case roster. |
+| `/transfer [builder]` | Lead, or Senior Staff to force it | Makes another Builder the Lead. The old Lead stays on the roster as a helper. |
 | `!inject [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
 | `!sub [number] [text]` | Builder on the case | Rewords that Extra Info entry. With no text, removes it (struck through, number kept). |
 | `/contract` | Lead | Sends the hiring contract with two Accept buttons (reuse allowed or not) and Decline; snapshots the text and version into the case. |
