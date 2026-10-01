@@ -71,7 +71,43 @@ module.exports = {
     .setName('drillserverreset')
     .setDescription('Wipe the drill server for a new builder drill (drill supervisors).')
     .addIntegerOption(o =>
-      o.setName('drill').setDescription('The drill number, like 1 for D1').setRequired(true).setMinValue(1)),
+      o.setName('drill').setDescription('Which drill: start typing a name or number to pick from the list')
+        .setRequired(true).setMinValue(1).setAutocomplete(true)),
+
+  // Lists every builder drill as "D3 - username", newest first, so nobody has
+  // to remember the number.
+  async autocomplete(interaction) {
+    const typed = String(interaction.options.getFocused() || '').toLowerCase();
+    const drills = hireStore.getAllCases()
+      .filter(c => c.drill && /^D\d+$/.test(String(c.ticketId)))
+      .sort((a, b) => Number(String(b.ticketId).slice(1)) - Number(String(a.ticketId).slice(1)));
+
+    // Drills started before names were saved: look them up once (quickly,
+    // autocomplete only gets 3 seconds) and remember them for next time.
+    const missing = drills.filter(c => !c.traineeName).slice(0, 25);
+    await Promise.all(missing.map(async c => {
+      const user = interaction.client.users.cache.get(c.traineeId)
+        || await Promise.race([
+          interaction.client.users.fetch(c.traineeId).catch(() => null),
+          new Promise(resolve => setTimeout(() => resolve(null), 1500)),
+        ]);
+      if (user) {
+        c.traineeName = user.username;
+        hireStore.updateCase(c.ticketId, { traineeName: user.username });
+      }
+    }));
+
+    const choices = drills
+      .map(c => {
+        const name = c.traineeName || 'unknown trainee';
+        const state = c.status === 'closed' ? 'finished' : 'in progress';
+        return { name: `${c.ticketId} - ${name} (${state})`.slice(0, 100), value: Number(String(c.ticketId).slice(1)) };
+      })
+      .filter(choice => choice.name.toLowerCase().includes(typed))
+      .slice(0, 25);
+
+    await interaction.respond(choices);
+  },
 
   async execute(interaction, client) {
     if (interaction.guildId !== DRILL_SERVER) {

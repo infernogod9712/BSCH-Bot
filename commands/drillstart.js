@@ -56,17 +56,33 @@ module.exports = {
       })),
     ];
 
+    // Builder drills run as a practice hire case. The case is made first so its
+    // number (D1, D2...) can go in the channel name, which is what
+    // /drillserverreset needs to know.
+    const drillCase = department === 'builder'
+      ? hireStore.createCase({
+          drill: true,
+          traineeId: trainee.id,
+          traineeName: trainee.username,
+          headId: interaction.user.id,
+          clientId: roleplayClient.id,
+        })
+      : null;
+
+    const idPart = drillCase ? `${String(drillCase.ticketId).toLowerCase()}-` : '';
     const channel = await guild.channels.create({
-      name: `${teamSlug}-drill-${trainee.username}`.toLowerCase().replace(/[^a-z0-9\-]/g, ''),
+      name: `${teamSlug}-drill-${idPart}${trainee.username}`.toLowerCase().replace(/[^a-z0-9\-]/g, ''),
       type: ChannelType.GuildText,
       parent: config.categories.drills || undefined,
-      topic: `Drill for ${trainee.id}`,
+      topic: drillCase ? `Drill ${drillCase.ticketId} for ${trainee.id}` : `Drill for ${trainee.id}`,
       permissionOverwrites: overwrites,
     }).catch(() => null);
 
     if (!channel) {
+      if (drillCase) hireStore.updateCase(drillCase.ticketId, { status: 'closed', closeReason: 'channel-failed' });
       return interaction.editReply({ content: '❌ Could not create the drill channel.' });
     }
+    if (drillCase) hireStore.updateCase(drillCase.ticketId, { channelId: channel.id });
 
     store.createDrill(trainee.id, {
       channelId: channel.id,
@@ -80,17 +96,6 @@ module.exports = {
       ? 'a simulated **moderation** scenario — handle it like a real incident.'
       : 'a simulated **hiring case** — run it through the Hiring SOP like a real build.';
 
-    // Builder drills run as a practice hire case in this channel
-    const drillCase = department === 'builder'
-      ? hireStore.createCase({
-          drill: true,
-          traineeId: trainee.id,
-          headId: interaction.user.id,
-          clientId: roleplayClient.id,
-          channelId: channel.id,
-        })
-      : null;
-
     const intakeRow = drillCase
       ? [new ActionRowBuilder().addComponents(
           new ButtonBuilder().setCustomId('hire_drill_intake').setLabel('📝 Fill in the hire form').setStyle(ButtonStyle.Primary),
@@ -101,7 +106,7 @@ module.exports = {
       content: drillCase ? `<@${trainee.id}> <@${roleplayClient.id}>` : `<@${trainee.id}>`,
       components: intakeRow,
       embeds: [{
-        title: `🎯 ${teamSlug === 'mod' ? 'Moderation' : 'Building'} Drill`,
+        title: `🎯 ${teamSlug === 'mod' ? 'Moderation' : 'Building'} Drill${drillCase ? ` ${drillCase.ticketId}` : ''}`,
         description:
           `This is a training drill, **not a real case**.\n\n` +
           `**Trainee:** <@${trainee.id}>\n` +
