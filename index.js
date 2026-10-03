@@ -15,6 +15,7 @@ const applicationHandler = require('./handlers/applicationhandler');
 const referralHandler = require('./handlers/referralhandler');
 const extraInfoHandler = require('./handlers/extrainfohandler');
 const devHandler = require('./handlers/devhandler');
+const { postNewChangelog } = require('./handlers/transparency');
 const { refreshStatusPanel } = require('./handlers/statuspanel');
 const store = require('./hire/store');
 const { sweepDrills } = require('./onboarding/drills');
@@ -255,6 +256,11 @@ client.on('guildCreate', registerCommands);
 client.once('clientReady', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
   for (const guild of client.guilds.cache.values()) await registerCommands(guild);
+
+  // Post any changelog entries this update brought with it
+  postNewChangelog(client, config)
+    .then(n => { if (n) console.log(`Posted ${n} bot update${n === 1 ? '' : 's'} to the transparency channel.`); })
+    .catch(e => console.error('changelog post failed:', e.message));
   // Check the timers every 15 minutes (first run shortly after startup)
   setTimeout(sweepCases, 30 * 1000);
   setInterval(sweepCases, 15 * 60 * 1000);

@@ -449,6 +449,12 @@ The hiring contract is not a setting: it lives in the bot's own `contract.js` fi
 - **How people found BSCH** (status panel channel) - the answers to the dropdown clients get when they open a ticket or an application. Redraws itself every time someone answers.
 - **Staff SOP** (SOP channel) - links this document.
 
+### Transparency
+
+`/transparency` (Admin and above) opens a form with a header and three boxes: Additions, Changes and Removals, one item per line. A line that starts with a space is a sub-point of the one above it. The post goes to the transparency channel as a coloured block: additions in green, changes in orange, removals in red.
+
+Every bot update posts there by itself too, under the header **Bot Update**, written in plain words rather than code-speak. The entries live in the bot's `changelog.json`, and the bot posts any it hasn't posted yet each time it restarts on new code.
+
 ### Owner Commands
 
 A few chat commands run the bot itself, locked to the roles in the **Ownership roles** setting (Owner and Co-Owner). To anyone else they do nothing at all, without a reply.

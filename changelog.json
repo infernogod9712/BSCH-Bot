@@ -1,0 +1,21 @@
+[
+  {
+    "id": "2026-10-03-1",
+    "header": "Bot Update",
+    "additions": [
+      "Clients are now asked for an invite to their server once they accept the contract",
+      " It shows on the case in its own Client Server section",
+      "/updateserverlink to swap in a new invite when the old one expires",
+      "/transfer hands a hire case to a new Lead (Senior Staff can force it)",
+      "/drillserverreset wipes the drill server ready for the next builder drill",
+      "/transparency for Admins to post notes like this one",
+      "Bot updates now post here on their own"
+    ],
+    "changes": [
+      "/admingrant now waits until the client has sent their server invite",
+      "Builder drill channels show the drill number, like builder-drill-d4-name",
+      "/delete also removes the ticket's voice channel and closes the case properly",
+      "The bot now refuses to save over a data file it can't read, instead of wiping it"
+    ]
+  }
+]
