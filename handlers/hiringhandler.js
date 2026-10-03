@@ -1334,7 +1334,15 @@ async function checkInBroke(interaction, client, config) {
     const guild = client.guilds.cache.get(config.guildId);
     const target = config.channels.checkInChannel || (record && record.forumThreadId);
     const channel = guild && target ? await guild.channels.fetch(target).catch(() => null) : null;
-    const sent = channel ? await channel.send(report).then(() => true).catch(() => false) : false;
+    // A forum gets a new post per report; anything else gets a message
+    const post = !channel ? Promise.reject()
+        : channel.type === ChannelType.GuildForum
+            ? channel.threads.create({
+                name: `Check-in: case #${record ? record.ticketId : "?"} - ${interaction.user.username}`.slice(0, 100),
+                message: report,
+            })
+            : channel.send(report);
+    const sent = await post.then(() => true).catch(() => false);
 
     await interaction.update({ components: [] }).catch(() => {});
     const helpDesk = config.channels.helpDesk ? ` You can also open a ticket in <#${config.channels.helpDesk}>.` : "";

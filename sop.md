@@ -155,7 +155,7 @@ Regardless of which way the template-bank decision went, the Lead (or the Builde
 - **Yes:** there are two close buttons. **Close + check on me in 30 days** (client only) also books a check-in DM 30 days later; **Just close it** doesn't. Either way, the bot closes the ticket and writes the completed case to its final state in the case file post. The transcript is posted to the transcripts channel and attached to the forum case file, the case's voice channel is deleted, and the ticket channel is renamed `closed-...`, moved to the **archived** category and locked so it can still be read.
 - **No:** the bot does not close the ticket - instead it asks the client what they need before closing, and the ticket stays open until that's resolved.
 
-**30-day check-in:** if the client asked for it, the bot DMs them 30 days later asking if the server is still working, with **All good** and **Something broke** buttons. Something broke asks what broke and sends it to the check-in channel (set with `/config`; if blank, the case file thread), pinging the Lead. Reach out to the client from there.
+**30-day check-in:** if the client asked for it, the bot DMs them 30 days later asking if the server is still working, with **All good** and **Something broke** buttons. Something broke asks what broke and posts it in the check-in forum (set with `/config`; if blank, the case file thread), pinging the Lead. Reach out to the client from there.
 
 Nothing about this service requires payment at any stage; the donation link is offered once, here, and is entirely optional.
 

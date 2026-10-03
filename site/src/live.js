@@ -86,7 +86,28 @@
     }
   }
 
+  // The widget feed only lists who's online. The invite lookup has the total.
+  const total = panel.querySelector('[data-live="total"]');
+  const inviteCode = (panel.dataset.invite || '').split('/').pop();
+
+  async function refreshTotal() {
+    if (!inviteCode) return;
+    try {
+      const response = await fetch(`https://discord.com/api/v10/invites/${encodeURIComponent(inviteCode)}?with_counts=true`, { cache: 'no-store' });
+      if (!response.ok) throw new Error(response.status);
+      const data = await response.json();
+      if (!Number.isFinite(data.approximate_member_count)) return;
+      // Same bot list as the faces, so the number means people
+      const people = Math.max(0, data.approximate_member_count - BOTS.size);
+      total.replaceChildren(el('strong', null, people), ` member${people === 1 ? '' : 's'} in the server`);
+      total.hidden = false;
+    } catch {
+      total.hidden = true;
+    }
+  }
+
   async function refresh() {
+    refreshTotal();
     try {
       const response = await fetch(FEED, { cache: 'no-store' });
       if (!response.ok) throw new Error(response.status);

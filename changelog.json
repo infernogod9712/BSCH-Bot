@@ -10,7 +10,7 @@
     ],
     "changes": [
       "Reviews on the website now scroll by on their own",
-      "The live server panel on the website only counts people, not bots"
+      "The live server panel on the website only counts people, not bots, and shows the total member count"
     ]
   },
   {
