@@ -117,7 +117,7 @@ Either Accept posts "Contract Accepted" in the ticket, logs the timestamp to bot
 
 Builders can't be given an admin role in a server they haven't joined, so the bot asks the client for an invite to their server as soon as the contract is accepted. The client presses **Add my server invite** and pastes the link into a short form. The bot only accepts a real Discord invite, tidies it to the `discord.gg/...` form, and records it in its own **Client Server** field on the case embed, in both the ticket and the case file post. Until it arrives, that field reads as waiting on the client.
 
-The Lead is pinged when the invite lands and joins the server with it. If the link expires, the client presses the same button again with a new one, and the field updates.
+The Lead is pinged when the invite lands and joins the server with it. If the link expires, the client presses the same button again with a new one, or anyone allowed can run `/updateserverlink`, and the field updates.
 
 ### Step 6 - Server Access & Build Start
 
@@ -165,6 +165,7 @@ Nothing about this service requires payment at any stage; the donation link is o
 | `!inject [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
 | `!sub [number] [text]` | Builder on the case | Rewords that Extra Info entry. With no text, removes it (struck through, number kept). |
 | `/contract` | Lead | Sends the hiring contract with two Accept buttons (reuse allowed or not) and Decline; snapshots the text and version into the case. |
+| `/updateserverlink [link]` | Client, Lead or Senior Staff | Sets or replaces the client's server invite on the case, with the same checks as the button. |
 | `/admingrant` | Builder on the case | Posts the access instructions for the client, with a Finished button that confirms access and starts the build. Waits for the client's server invite first, and asks for it again if it is missing. |
 | `/buildfinished` | Lead | Marks the build complete; triggers the client rating/review ping. |
 | `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters, and optionally posts the photos to the showcase channel. |

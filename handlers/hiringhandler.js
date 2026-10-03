@@ -646,16 +646,25 @@ async function openInviteModal(interaction, client, config) {
 async function saveInvite(interaction, client, config) {
     const record = store.getCaseByChannel(interaction.channel.id);
     if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+    return recordInvite(interaction, record, interaction.fields.getTextInputValue("link"), "Press the button again and paste it in.");
+}
 
-    const match = interaction.fields.getTextInputValue("link").trim().match(INVITE_PATTERN);
+// Shared by the form and /updateserverlink, so both check and announce the
+// same way. Replies to the interaction either way.
+async function recordInvite(interaction, record, rawLink, retryHint) {
+    const match = String(rawLink || "").trim().match(INVITE_PATTERN);
     if (!match) {
         return interaction.reply({
-            content: "❌ That doesn't look like a Discord invite. It should look like `discord.gg/abc123`. Press the button again and paste it in.",
+            content: `❌ That doesn't look like a Discord invite. It should look like \`discord.gg/abc123\`. ${retryHint}`,
             flags: 64,
         });
     }
 
     const invite = `https://discord.gg/${match[1]}`;
+    if (invite === record.serverInvite) {
+        return interaction.reply({ content: `That's already the server link on this case: ${invite}`, flags: 64 });
+    }
+
     const replacing = Boolean(record.serverInvite);
     const updated = store.updateCase(record.ticketId, {
         serverInvite: invite,
@@ -664,7 +673,7 @@ async function saveInvite(interaction, client, config) {
     await updateCaseViews(interaction.guild, updated);
 
     const builders = record.lead ? `<@${record.lead}>` : "Builders";
-    await interaction.reply({
+    return interaction.reply({
         content: replacing
             ? `🔗 <@${interaction.user.id}> updated the server invite: ${invite}\n${builders}, use this one from now on.`
             : `🔗 <@${interaction.user.id}> sent their server invite: ${invite}\n${builders}, join the server, then run \`/admingrant\` when you're in.`,
@@ -672,6 +681,7 @@ async function saveInvite(interaction, client, config) {
 }
 
 module.exports.promptInvite = promptInvite;
+module.exports.recordInvite = recordInvite;
 
 // ------------------------------------------------------------------
 // Step 5 — the Lead confirms access, which starts the build
