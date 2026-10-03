@@ -18,6 +18,7 @@ const store = require("../hire/store");
 const referrals = require("./referralhandler");
 const archive = require("./archive");
 const { renderEntry } = require("./extrainfohandler");
+const sitereviews = require("./sitereviews");
 
 module.exports = {
     async handle(interaction, client, config) {
@@ -95,6 +96,14 @@ module.exports = {
             return saveRating(interaction, client, config);
         }
 
+        // Client says whether their review can go on the website
+        if (interaction.isButton() && interaction.customId === "hire_site_yes") {
+            return siteReviewAnswer(interaction, client, config, true);
+        }
+        if (interaction.isButton() && interaction.customId === "hire_site_no") {
+            return siteReviewAnswer(interaction, client, config, false);
+        }
+
         // Step 8 — template bank: Lead decision, then client consent
         if (interaction.isButton() && interaction.customId === "hire_template_yes") {
             return templateLeadYes(interaction, client, config);
@@ -111,7 +120,21 @@ module.exports = {
 
         // Step 9 — final close confirmation
         if (interaction.isButton() && interaction.customId === "hire_close_yes") {
-            return finalCloseYes(interaction, client, config);
+            return finalCloseYes(interaction, client, config, false);
+        }
+        if (interaction.isButton() && interaction.customId === "hire_close_yes_checkin") {
+            return finalCloseYes(interaction, client, config, true);
+        }
+
+        // The 30-day check-in DM (customId carries the ticket id)
+        if (interaction.isButton() && interaction.customId.startsWith("hire_checkin_ok:")) {
+            return checkInOk(interaction);
+        }
+        if (interaction.isButton() && interaction.customId.startsWith("hire_checkin_broke:")) {
+            return openCheckInModal(interaction);
+        }
+        if (interaction.isModalSubmit() && interaction.customId.startsWith("hire_checkin_modal:")) {
+            return checkInBroke(interaction, client, config);
         }
         if (interaction.isButton() && interaction.customId === "hire_close_no") {
             return openCloseNeedModal(interaction);
@@ -919,6 +942,72 @@ async function saveRating(interaction, client, config) {
             (review ? `\n> ${review}` : "") +
             `\n\nThe Lead can now file \`/paperwork\` to wrap up.`,
     });
+
+    // Good reviews with words in them get offered a spot on the website
+    if (!record.drill && score >= SITE_REVIEW_MIN && review.trim()) {
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId("hire_site_yes").setLabel("Yes, put it on the site").setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId("hire_site_no").setLabel("No thanks").setStyle(ButtonStyle.Secondary),
+        );
+        await interaction.channel.send({
+            content: `<@${record.clientId}>`,
+            embeds: [{
+                title: "🌐 Can we show your review?",
+                color: 0x2f6bff,
+                description: "Thanks for the kind words! Can we put your rating and review on the BSCH website? " +
+                    "It's shown as **Client**, never your username.",
+            }],
+            components: [row],
+        });
+    }
+}
+
+const SITE_REVIEW_MIN = 8;
+
+// Client answered the website question
+async function siteReviewAnswer(interaction, client, config, yes) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+    if (interaction.user.id !== record.clientId) {
+        return interaction.reply({ content: "❌ Only the client can answer this.", flags: 64 });
+    }
+
+    await interaction.deferUpdate();
+    await interaction.message.edit({ components: [] }).catch(() => {});
+
+    if (!yes) {
+        store.updateCase(record.ticketId, { siteReview: { allowed: false } });
+        return interaction.channel.send("👍 No problem, your review stays private.");
+    }
+
+    const r = record.rating || {};
+    const entry = { score: r.score, quote: r.review.trim(), who: "Client" };
+    let published = false;
+    if (sitereviews.canPublish()) {
+        try {
+            await sitereviews.publishReview(entry);
+            published = true;
+        } catch (e) {
+            console.error(`Site review for case #${record.ticketId} failed:`, e.message);
+        }
+    }
+    store.updateCase(record.ticketId, { siteReview: { allowed: true, published } });
+
+    await interaction.channel.send(published
+        ? "🌐 Thank you! Your review will be on the site within a few minutes."
+        : "🌐 Thank you! Staff will add your review to the site.");
+
+    // Couldn't commit it, so leave a note where staff will see it
+    if (!published && record.forumThreadId) {
+        const thread = await interaction.guild.channels.fetch(record.forumThreadId).catch(() => null);
+        if (thread) {
+            await thread.send(
+                "🌐 The client OK'd this review for the website, but the bot couldn't publish it " +
+                "(no GITHUB_TOKEN or GitHub error). Add it to `site/src/reviews.json` by hand:\n" +
+                "```json\n" + JSON.stringify(entry, null, 2) + "\n```"
+            ).catch(() => {});
+        }
+    }
 }
 
 // Client clicked "No thanks"
@@ -1080,10 +1169,16 @@ async function sendFinalCloseEmbed(channel, record, config) {
         ? `\n\n❓ Need anything later? Open a ticket in <#${config.channels.helpDesk}>.`
         : "";
 
+    // Real clients can ask for a check-in DM a month later; drills can't
+    const checkIn = !record.drill;
     const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId("hire_close_yes").setLabel("✅ Yes, close the ticket").setStyle(ButtonStyle.Success),
+        ...(checkIn ? [new ButtonBuilder().setCustomId("hire_close_yes_checkin").setLabel(`✅ Close + check on me in ${CHECK_IN_DAYS} days`).setStyle(ButtonStyle.Success)] : []),
+        new ButtonBuilder().setCustomId("hire_close_yes").setLabel(checkIn ? "✅ Just close it" : "✅ Yes, close the ticket").setStyle(ButtonStyle.Success),
         new ButtonBuilder().setCustomId("hire_close_no").setLabel("Not yet").setStyle(ButtonStyle.Secondary),
     );
+    const checkInLine = checkIn
+        ? `\n\n📅 Want us to DM you in ${CHECK_IN_DAYS} days to make sure your server is still working? Pick the first button.`
+        : "";
 
     await channel.send({
         content: `<@${record.clientId}>`,
@@ -1093,7 +1188,7 @@ async function sendFinalCloseEmbed(channel, record, config) {
             description:
                 "Thank you for building with BSCH! A couple of last things:\n\n" +
                 "🔑 Please **revoke BSCH's admin access** from your server now that the build is finished." +
-                helpDesk + donation +
+                helpDesk + donation + checkInLine +
                 "\n\nIs it clear to close this ticket?",
         }],
         components: [row],
@@ -1101,7 +1196,7 @@ async function sendFinalCloseEmbed(channel, record, config) {
 }
 
 // Client (or staff) clicked "Yes, close"
-async function finalCloseYes(interaction, client, config) {
+async function finalCloseYes(interaction, client, config, checkIn) {
     const record = store.getCaseByChannel(interaction.channel.id);
     if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
 
@@ -1109,10 +1204,22 @@ async function finalCloseYes(interaction, client, config) {
     if (!allowed) {
         return interaction.reply({ content: "❌ Only the client or case staff can close the ticket.", flags: 64 });
     }
+    // Only the client can sign themselves up for a DM
+    if (checkIn && interaction.user.id !== record.clientId) {
+        return interaction.reply({ content: "❌ Only the client can ask for the check-in. Use **Just close it** instead.", flags: 64 });
+    }
 
     await interaction.deferUpdate();
     await interaction.message.edit({ components: [] }).catch(() => {});
-    await interaction.channel.send("🔒 Closing the ticket and saving the final record. Thank you!");
+    if (checkIn) {
+        store.updateCase(record.ticketId, {
+            checkIn: { dueAt: new Date(Date.now() + CHECK_IN_DAYS * 24 * 60 * 60 * 1000).toISOString() },
+        });
+    }
+    await interaction.channel.send(
+        "🔒 Closing the ticket and saving the final record. Thank you!" +
+        (checkIn ? `\n📅 We'll DM you in ${CHECK_IN_DAYS} days to check in. Keep your DMs open for the BSCH server.` : "")
+    );
     await closeCaseChannel(interaction.guild, record, interaction.user.id, "completed", config);
 }
 
@@ -1141,6 +1248,101 @@ async function closeNeedSubmitted(interaction, client, config) {
         content: `📌 The ticket will stay open. ${leadMention}, the client still needs:\n> ${need}`,
     });
 }
+
+// ==================================================================
+// 30-day check-in
+// (Client picks "Close + check on me" at the final close. The timer sweep in
+// index.js calls sweepCheckIns, which DMs them when it's due.)
+// ==================================================================
+
+const CHECK_IN_DAYS = 30;
+
+async function sweepCheckIns(client) {
+    const now = Date.now();
+    for (const record of store.getAllCases()) {
+        const c = record.checkIn;
+        if (!c || c.sentAt || new Date(c.dueAt).getTime() > now) continue;
+
+        // Mark it first so a crash mid-send never DMs the client twice
+        store.updateCase(record.ticketId, { checkIn: { ...c, sentAt: new Date().toISOString() } });
+
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder().setCustomId(`hire_checkin_ok:${record.ticketId}`).setLabel("👍 All good").setStyle(ButtonStyle.Success),
+            new ButtonBuilder().setCustomId(`hire_checkin_broke:${record.ticketId}`).setLabel("🔧 Something broke").setStyle(ButtonStyle.Danger),
+        );
+        try {
+            const user = await client.users.fetch(record.clientId);
+            await user.send({
+                embeds: [{
+                    title: "👋 BSCH check-in",
+                    color: 0x2f6bff,
+                    description: `It's been ${CHECK_IN_DAYS} days since we finished your build (case #${record.ticketId}). ` +
+                        "Is your server still working the way it should?",
+                }],
+                components: [row],
+            });
+        } catch (e) {
+            // DMs closed or the client left Discord; nothing else to do
+            store.updateCase(record.ticketId, { checkIn: { ...c, sentAt: new Date().toISOString(), failed: true } });
+        }
+    }
+}
+
+function caseFromCustomId(customId) {
+    const id = customId.split(":")[1];
+    return store.readData().cases[id] || null;
+}
+
+async function checkInOk(interaction) {
+    const record = caseFromCustomId(interaction.customId);
+    if (record) store.updateCase(record.ticketId, { checkIn: { ...record.checkIn, result: "ok" } });
+    await interaction.update({ components: [] });
+    await interaction.followUp("🎉 Glad to hear it! If anything ever does break, just message us.");
+}
+
+async function openCheckInModal(interaction) {
+    const id = interaction.customId.split(":")[1];
+    const modal = new ModalBuilder().setCustomId(`hire_checkin_modal:${id}`).setTitle("What broke?");
+    const what = new TextInputBuilder()
+        .setCustomId("what").setLabel("Tell us what broke")
+        .setStyle(TextInputStyle.Paragraph).setRequired(true).setMaxLength(1000);
+    modal.addComponents(new ActionRowBuilder().addComponents(what));
+    await interaction.showModal(modal);
+}
+
+// Client told us what broke -> send it back to the BSCH server
+async function checkInBroke(interaction, client, config) {
+    const record = caseFromCustomId(interaction.customId);
+    const what = interaction.fields.getTextInputValue("what");
+    if (record) store.updateCase(record.ticketId, { checkIn: { ...record.checkIn, result: "broke", what } });
+
+    const report = {
+        content: record && record.lead ? `<@${record.lead}>` : undefined,
+        embeds: [{
+            title: `🔧 Check-in: something broke${record ? ` (case #${record.ticketId})` : ""}`,
+            color: 0xe74c3c,
+            description: `> ${what.replace(/\n/g, "\n> ")}`,
+            fields: [
+                { name: "Client", value: `<@${interaction.user.id}> (${interaction.user.id})`, inline: true },
+                ...(record && record.serverInvite ? [{ name: "Client Server", value: record.serverInvite, inline: true }] : []),
+            ],
+            footer: { text: "From the 30-day check-in DM" },
+        }],
+    };
+
+    // The check-in channel if one is set, otherwise the case's log thread
+    const guild = client.guilds.cache.get(config.guildId);
+    const target = config.channels.checkInChannel || (record && record.forumThreadId);
+    const channel = guild && target ? await guild.channels.fetch(target).catch(() => null) : null;
+    const sent = channel ? await channel.send(report).then(() => true).catch(() => false) : false;
+
+    await interaction.update({ components: [] }).catch(() => {});
+    const helpDesk = config.channels.helpDesk ? ` You can also open a ticket in <#${config.channels.helpDesk}>.` : "";
+    await interaction.followUp(sent
+        ? `📨 Sent to the BSCH team. Someone will reach out soon.${helpDesk}`
+        : `❌ Couldn't reach the team just now.${helpDesk || " Please message the BSCH server."}`);
+}
+module.exports.sweepCheckIns = sweepCheckIns;
 
 // ==================================================================
 // Shared close engine — transcript + mark closed + delete the channel.

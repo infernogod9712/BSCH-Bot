@@ -1,27 +1,10 @@
 {
-  "_comment": "Edit these and push. The site rebuilds itself. Leave reviews empty until real ones come in from the bot's rating step.",
+  "_comment": "Edit these and push. The site rebuilds itself. Reviews live in reviews.json; the bot adds new ones when a client says yes.",
   "serversBuilt": 3,
   "builders": 6,
   "claimHours": 24,
   "rating": "8.6",
   "discord": "https://discord.gg/tduZtM6vZT",
-  "reviews": [
-    {
-      "score": 10,
-      "quote": "Ediited permissions and channels quickly and did a good job with it",
-      "who": "Client"
-    },
-    {
-      "score": 7.7,
-      "quote": "Built an entire server nicely with littile to no permission errors",
-      "who": "Client"
-    },
-    {
-      "score": 8,
-      "quote": "Excellent, clean channels and categories",
-      "who": "Client"
-    }
-  ],
   "discordApply": "https://discord.gg/CzfYAquUXE",
   "_botsComment": "Bot names hidden from the live panel. Discord does not mark bots in its widget feed, so add new bots here.",
   "widgetBots": [

@@ -17,6 +17,10 @@ const SRC = path.join(__dirname, 'src');
 const DIST = path.join(__dirname, 'dist');
 const SOP_PATH = 'shakbboenbraprtacg.html';
 
+function esc(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function slug(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
@@ -75,17 +79,34 @@ function buildSop() {
 function fillTokens(html) {
   const stats = JSON.parse(fs.readFileSync(path.join(SRC, 'stats.json'), 'utf-8'));
 
-  const reviews = stats.reviews.length
-    ? stats.reviews.map(r => `<figure>
-          <p class="score">${r.score}/10</p>
-          <blockquote>${r.quote}</blockquote>
-          <figcaption>${r.who}</figcaption>
-        </figure>`).join('\n        ')
-    : [1, 2, 3].map(() => `<figure class="empty">
-          <p class="score">—/10</p>
+  // reviews.json is written by the bot (through GitHub) when a client says
+  // their review can go on the site, so its text is escaped like any user input
+  const list = JSON.parse(fs.readFileSync(path.join(SRC, 'reviews.json'), 'utf-8'));
+  const card = r => `<figure>
+          <p class="score">${esc(r.score)}/10</p>
+          <blockquote>${esc(r.quote)}</blockquote>
+          <figcaption>${esc(r.who)}</figcaption>
+        </figure>`;
+
+  // The strip scrolls forever by sliding one copy of the cards and swapping in
+  // an identical second copy. Short lists repeat so a copy is wider than a
+  // screen and the loop never shows a gap.
+  let reviews;
+  if (list.length) {
+    const copy = [];
+    while (copy.length < Math.max(6, list.length)) copy.push(...list);
+    const cards = copy.map(card).join('\n        ');
+    reviews = `<div class="track" style="--dur:${copy.length * 10}s">
+        <div class="set">${cards}</div>
+        <div class="set" aria-hidden="true">${cards}</div>
+      </div>`;
+  } else {
+    reviews = `<div class="track still"><div class="set">${[1, 2, 3].map(() => `<figure class="empty">
+          <p class="score">-/10</p>
           <blockquote>Your rating here.</blockquote>
           <figcaption>Waiting on the next build</figcaption>
-        </figure>`).join('\n        ');
+        </figure>`).join('\n        ')}</div></div>`;
+  }
 
   // Stamp the css and js links with a hash of their contents, so a browser
   // never keeps yesterday's stylesheet after a deploy.
@@ -104,8 +125,8 @@ function fillTokens(html) {
     .replace(/__SERVERS__/g, stats.serversBuilt)
     .replace(/__CLAIM__/g, stats.claimHours)
     .replace(/__RATING__/g, stats.rating)
-    .replace(/__BOTS__/g, (stats.widgetBots || []).join('|').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'))
-    .replace(/__REVIEWS__/g, reviews);
+    .replace(/__BOTS__/g, esc((stats.widgetBots || []).join('|')))
+    .replace(/__REVIEWS__/g, () => reviews);
 }
 
 function build() {
@@ -114,7 +135,7 @@ function build() {
 
   // Every page gets the same tokens filled in, so the header and links match
   for (const file of fs.readdirSync(SRC)) {
-    if (file === 'sop.template.html' || file === 'stats.json') continue;
+    if (file === 'sop.template.html' || file === 'stats.json' || file === 'reviews.json') continue;
     const from = path.join(SRC, file);
     if (file.endsWith('.html')) {
       fs.writeFileSync(path.join(DIST, file), fillTokens(fs.readFileSync(from, 'utf-8')));

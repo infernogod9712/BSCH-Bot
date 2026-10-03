@@ -178,6 +178,8 @@ async function sweepCases() {
     await sweepArchive(guild, config).catch(e => console.error('sweepArchive error:', e));
     // Staff suspensions that have run their course
     await sweepSuspensions(guild, config).catch(e => console.error('sweepSuspensions error:', e));
+    // 30-day check-in DMs that are due
+    await hiringHandler.sweepCheckIns(client).catch(e => console.error('sweepCheckIns error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim/inactivity timers

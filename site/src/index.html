@@ -110,8 +110,22 @@
   .steps h3 { font-size: 1.28rem; }
   .steps p { color: var(--dim); margin: 9px 0 0; max-width: 62ch; }
 
-  .quotes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 46px; }
-  .quotes figure { margin: 0; padding: 26px; border: 1px solid var(--line); background: rgba(11,27,62,.6); }
+  /* reviews slide right to left forever; hover or focus pauses them */
+  .quotes { margin-top: 46px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .quotes .track { display: flex; width: max-content; animation: slide var(--dur, 40s) linear infinite; }
+  .quotes:hover .track, .quotes:focus-within .track { animation-play-state: paused; }
+  .quotes .track.still { animation: none; width: auto; }
+  .quotes .set { display: flex; gap: 20px; padding-right: 20px; }
+  .quotes figure { margin: 0; width: 340px; flex: none; padding: 26px; border: 1px solid var(--line); background: rgba(11,27,62,.6); }
+  @keyframes slide { to { transform: translateX(-50%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .quotes { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+    .quotes .track { animation: none; }
+    .quotes .set[aria-hidden] { display: none; }
+  }
+  @media (max-width: 700px) { .quotes figure { width: 270px; } }
   .quotes .score { font-family: "Archivo Black", Impact, sans-serif; color: var(--blue-soft); font-size: 1.5rem; margin: 0 0 12px; }
   .quotes blockquote { margin: 0; font-size: 1.04rem; }
   .quotes figcaption { color: var(--dim); font-size: 14px; margin-top: 14px; font-weight: 600; }

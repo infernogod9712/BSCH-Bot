@@ -130,6 +130,8 @@ When the build is complete, the Lead runs `/buildfinished`. This immediately pin
 - **No:** nothing further happens and the flow proceeds to Step 8.
 - **Yes:** the bot presents a form with two fields: a rating entered as any number 1-10, and a free-text review. Whatever the client submits is logged to both the ticket and the case file post once received.
 
+If the rating is 8 or higher and has a written review, the bot also asks the client whether it can go on the BSCH website. On yes, the bot adds it to the site's reviews as "Client" (never their username) and the site updates within a few minutes. If the bot can't publish it, it posts the review in the case file thread so staff can add it by hand.
+
 ### Step 8 - Paperwork
 
 After the client has responded, the Builder files `/paperwork` - a slash command, not a modal, since Discord modals cannot accept file attachments. Server name, screenshots, and any other closing details are supplied as command parameters directly, with images attached the same way any file is attached to a slash command. This step is independent of the roster; it does not re-derive or auto-fill builder credit from roster data.
@@ -150,8 +152,10 @@ Nothing else in the flow depends on this outcome. There is no separate command t
 
 Regardless of which way the template-bank decision went, the Lead (or the Builder who performed the copy) runs `/copyphasedone` to close out this stage. The bot then sends one final embed to the client: a reminder to revoke BSCH's admin access from their server, a pointer to the help desk, the donation link, and a final question - is it clear to close the ticket?
 
-- **Yes:** the bot closes the ticket and writes the completed case to its final state in the case file post. The transcript is posted to the transcripts channel and attached to the forum case file, the case's voice channel is deleted, and the ticket channel is renamed `closed-...`, moved to the **archived** category and locked so it can still be read.
+- **Yes:** there are two close buttons. **Close + check on me in 30 days** (client only) also books a check-in DM 30 days later; **Just close it** doesn't. Either way, the bot closes the ticket and writes the completed case to its final state in the case file post. The transcript is posted to the transcripts channel and attached to the forum case file, the case's voice channel is deleted, and the ticket channel is renamed `closed-...`, moved to the **archived** category and locked so it can still be read.
 - **No:** the bot does not close the ticket - instead it asks the client what they need before closing, and the ticket stays open until that's resolved.
+
+**30-day check-in:** if the client asked for it, the bot DMs them 30 days later asking if the server is still working, with **All good** and **Something broke** buttons. Something broke asks what broke and sends it to the check-in channel (set with `/config`; if blank, the case file thread), pinging the Lead. Reach out to the client from there.
 
 Nothing about this service requires payment at any stage; the donation link is offered once, here, and is entirely optional.
 

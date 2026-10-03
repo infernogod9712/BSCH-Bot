@@ -1,5 +1,19 @@
 [
   {
+    "id": "2026-10-03-2",
+    "header": "Bot Update",
+    "additions": [
+      "Clients who rate their build 8 or higher can put their review on the BSCH website",
+      " It shows as Client, never their username",
+      "Clients can ask for a check-in DM 30 days after their ticket closes",
+      " If something broke, they tell the bot and it goes straight to staff"
+    ],
+    "changes": [
+      "Reviews on the website now scroll by on their own",
+      "The live server panel on the website only counts people, not bots"
+    ]
+  },
+  {
     "id": "2026-10-03-1",
     "header": "Bot Update",
     "additions": [
