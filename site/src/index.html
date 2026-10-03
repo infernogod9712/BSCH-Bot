@@ -118,9 +118,18 @@
   .quotes .empty { border-style: dashed; background: transparent; }
   .quotes .empty .score, .quotes .empty blockquote { color: var(--dim); }
 
-  .final { background: var(--blue); text-align: center; padding: 92px 0; }
+  .final { background: var(--blue); padding: 92px 0; }
+  .final .shell { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 56px; align-items: center; }
   .final h2 { font-size: clamp(2.3rem, 6.4vw, 4.6rem); color: #fff; }
-  .final p { font-size: 1.18rem; max-width: 46ch; margin: 20px auto 34px; color: rgba(255,255,255,.9); font-weight: 500; }
+  .final p { font-size: 1.18rem; max-width: 46ch; margin: 20px 0 34px; color: rgba(255,255,255,.9); font-weight: 500; }
+  .final .live { display: block; width: 100%; max-width: 350px; height: 500px; border: 0;
+    outline: 3px solid rgba(255,255,255,.28); outline-offset: 6px; box-shadow: 0 26px 60px rgba(6,16,41,.45); }
+  .final .live-label { font: 500 12px/1 "IBM Plex Mono", monospace; letter-spacing: .14em; color: rgba(255,255,255,.75); margin: 0 0 16px; }
+  @media (max-width: 860px) {
+    .final .shell { grid-template-columns: 1fr; text-align: center; gap: 44px; }
+    .final p { margin: 20px auto 34px; }
+    .final .live { margin: 0 auto; }
+  }
   .final a {
     background: #fff; color: var(--blue); text-decoration: none;
     font: 700 20px/1 Barlow, sans-serif; padding: 22px 42px; display: inline-block; border: 3px solid #fff;
@@ -259,9 +268,18 @@
 
 <section class="final" data-reveal>
   <div class="shell">
-    <h2>Tell us about your site</h2>
-    <p>Open a ticket and describe what you're building. If nobody claims it in two days the bot apologises and closes it, so you're never left hanging.</p>
-    <a href="__DISCORD__">Join the Discord</a>
+    <div>
+      <h2>Tell us about your site</h2>
+      <p>Open a ticket and describe what you're building. If nobody claims it in two days the bot apologises and closes it, so you're never left hanging.</p>
+      <a href="__DISCORD__">Join the Discord</a>
+    </div>
+    <div>
+      <p class="live-label">LIVE FROM THE SERVER</p>
+      <iframe class="live" src="https://discord.com/widget?id=1497625871370944614&amp;theme=dark"
+        title="BSCH Discord server: who's online right now"
+        width="350" height="500" loading="lazy"
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+    </div>
   </div>
 </section>
 
