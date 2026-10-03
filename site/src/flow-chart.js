@@ -45,9 +45,11 @@ const N = [
   { id: "c3",   kind: "bot",    col: "r1", after: "c2", text: "Logs the reason, closes the case" },
   { id: "t12",  kind: "term",   col: "r1", after: "c3", text: "Ticket archived" },
   { id: "n12",  kind: "bot",    col: "main", text: "Posts <b>Contract Accepted</b> and records whether the build may be reused later" },
+  { id: "inv1", kind: "bot",    col: "main", text: "Asks the client for an invite to their server, with an <b>Add my server invite</b> button" },
+  { id: "inv2", kind: "client", col: "main", text: "Client pastes the link. It goes into its own <b>Client Server</b> field on the case, and the Lead is pinged to join" },
   { id: "dvc",  kind: "dec",    col: "main", text: "Want a voice channel for the build?" },
   { id: "vc1",  kind: "bot",    col: "r1", anchor: "dvc", text: "Creates <code>hire-vc-[id]</code> directly under the ticket" },
-  { id: "n13",  kind: "staff",  col: "main", step: 13, text: "Builder runs <code>/admingrant</code>" },
+  { id: "n13",  kind: "staff",  col: "main", step: 13, text: "Builder joins with the invite, then runs <code>/admingrant</code>" },
   { id: "n14",  kind: "bot",    col: "main", text: "Tells the client: make a role, give it <b>Administrator</b>, drag it to the <b>very top</b>, hand it to the builders" },
   { id: "n15",  kind: "client", col: "main", step: 14, text: "Client grants the access" },
   { id: "n16",  kind: "staff",  col: "main", step: 15, text: "Lead presses <b>Finished, we have access</b>" },
@@ -185,7 +187,7 @@ flow("n8b", "n10", "n11", "d12");
 branch("d12", "c1", "no", "Decline");
 flow("c1", "c2", "c3", "t12");
 E.push([[bot(P("d12")), top(P("n12"))], "yes", "Either Accept"]);
-flow("n12", "dvc");
+flow("n12", "inv1", "inv2", "dvc");
 branch("dvc", "vc1", "yes", "Yes");
 E.push([[bot(P("dvc")), top(P("n13"))], "no", "No"]);
 E.push([[bot(P("vc1")), [P("vc1").x, P("n13").y], right(P("n13"))], "yes"]);

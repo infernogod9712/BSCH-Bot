@@ -63,6 +63,14 @@ module.exports = {
             return confirmAdminAccess(interaction, client, config);
         }
 
+        // The client's server invite
+        if (interaction.isButton() && interaction.customId === "hire_invite_open") {
+            return openInviteModal(interaction, client, config);
+        }
+        if (interaction.isModalSubmit() && interaction.customId === "hire_invite_modal") {
+            return saveInvite(interaction, client, config);
+        }
+
         // Optional voice channel for the build
         if (interaction.isButton() && interaction.customId === "hire_vc_yes") {
             return createTempVC(interaction, client, config);
@@ -394,6 +402,14 @@ function buildCaseEmbed(record, historyText) {
         fields.push({ name: "Contract", value: contractText });
     }
 
+    // The client's server invite, asked for once the contract is accepted
+    if (record.serverInvite) {
+        const ts = Math.floor(new Date(record.serverInviteAt).getTime() / 1000);
+        fields.push({ name: "Client Server", value: `${record.serverInvite}\nSent <t:${ts}:R>` });
+    } else if (record.contract && record.contract.acceptedAt) {
+        fields.push({ name: "Client Server", value: "⏳ Waiting on the client's invite link." });
+    }
+
     // Step 5 — server access granted / build started
     if (record.adminGrantedAt) {
         const ts = Math.floor(new Date(record.adminGrantedAt).getTime() / 1000);
@@ -580,8 +596,82 @@ async function acceptContract(interaction, client, config, copyConsent) {
             : "🗃️ They asked us **not** to reuse their build, so it won't be copied.")
     );
 
+    await promptInvite(interaction.channel, updated);
     await promptTempVC(interaction.channel, updated);
 }
+
+// ------------------------------------------------------------------
+// The client's server invite. Builders have to be in the server before the
+// client can hand them an admin role, so this comes before /admingrant.
+// ------------------------------------------------------------------
+const INVITE_PATTERN = /(?:https?:\/\/)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/([A-Za-z0-9-]+)/i;
+
+async function promptInvite(channel, record) {
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("hire_invite_open").setLabel("🔗 Add my server invite").setStyle(ButtonStyle.Primary),
+    );
+    await channel.send({
+        content: `<@${record.clientId}>`,
+        embeds: [{
+            title: "🔗 Send us an invite to your server",
+            color: 0x3498db,
+            description:
+                "Your builders need to join your server before they can start. Make an invite link " +
+                "(right-click your server icon, **Invite People**, and set it to **never expire** if you can), " +
+                "then press the button below and paste it in.\n\nIf the link stops working, press the button again with a new one.",
+        }],
+        components: [row],
+    });
+}
+
+async function openInviteModal(interaction, client, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+    if (interaction.user.id !== record.clientId && !isLeadOrSenior(interaction.member, record, config)) {
+        return interaction.reply({ content: "❌ Only the client can send the server invite.", flags: 64 });
+    }
+
+    const modal = new ModalBuilder().setCustomId("hire_invite_modal").setTitle("Your server invite");
+    const link = new TextInputBuilder()
+        .setCustomId("link")
+        .setLabel("Invite link, like discord.gg/abc123")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true)
+        .setMaxLength(120);
+    if (record.serverInvite) link.setValue(record.serverInvite);
+    modal.addComponents(new ActionRowBuilder().addComponents(link));
+    await interaction.showModal(modal);
+}
+
+async function saveInvite(interaction, client, config) {
+    const record = store.getCaseByChannel(interaction.channel.id);
+    if (!record) return interaction.reply({ content: "❌ Not a valid hire case channel.", flags: 64 });
+
+    const match = interaction.fields.getTextInputValue("link").trim().match(INVITE_PATTERN);
+    if (!match) {
+        return interaction.reply({
+            content: "❌ That doesn't look like a Discord invite. It should look like `discord.gg/abc123`. Press the button again and paste it in.",
+            flags: 64,
+        });
+    }
+
+    const invite = `https://discord.gg/${match[1]}`;
+    const replacing = Boolean(record.serverInvite);
+    const updated = store.updateCase(record.ticketId, {
+        serverInvite: invite,
+        serverInviteAt: new Date().toISOString(),
+    });
+    await updateCaseViews(interaction.guild, updated);
+
+    const builders = record.lead ? `<@${record.lead}>` : "Builders";
+    await interaction.reply({
+        content: replacing
+            ? `🔗 <@${interaction.user.id}> updated the server invite: ${invite}\n${builders}, use this one from now on.`
+            : `🔗 <@${interaction.user.id}> sent their server invite: ${invite}\n${builders}, join the server, then run \`/admingrant\` when you're in.`,
+    });
+}
+
+module.exports.promptInvite = promptInvite;
 
 // ------------------------------------------------------------------
 // Step 5 — the Lead confirms access, which starts the build

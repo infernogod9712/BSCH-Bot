@@ -66,6 +66,7 @@ Each case is a single record keyed by **ticketId**, containing at minimum:
 - Ordered list of Extra Info entries
 - Roster (Lead plus any self-added helper builders)
 - Contract status and the exact contract text/timestamp accepted
+- The client's server invite link
 - Admin-access-granted timestamp
 - Build-started and build-finished timestamps
 - Client's rating/review response
@@ -110,26 +111,32 @@ The client gets three buttons, because accepting also answers the template bank 
 - **Accept - don't reuse my build:** the contract is accepted and the case is marked as never to be copied.
 - **Decline:** the bot presents a short form asking their reason, logs it to the case file post, and closes the ticket - a declined case does not proceed further.
 
-Either Accept posts "Contract Accepted" in the ticket, logs the timestamp to both the ticket embed and the case file post, and then offers a **voice channel** for the build. If the client or the Lead says yes, the bot creates `hire-vc-[ticketid]` directly under the ticket, visible to the same people, and deletes it when the case closes.
+Either Accept posts "Contract Accepted" in the ticket, logs the timestamp to both the ticket embed and the case file post, asks the client for their **server invite** (Step 5), and then offers a **voice channel** for the build. If the client or the Lead says yes, the bot creates `hire-vc-[ticketid]` directly under the ticket, visible to the same people, and deletes it when the case closes.
 
-### Step 5 - Server Access & Build Start
+### Step 5 - Server Invite
 
-After acceptance, the client grants BSCH's assigned Builder(s) admin access directly in their own server. Because the bot has no visibility into permission changes on a server it isn't managing, this step is confirmed manually. The Builder runs `/admingrant`, and the bot posts instructions for the client: make a role, give it **Administrator**, drag it to the **very top** of their role list, and hand it to the builders named on the case. The message carries a **Finished** button that only a Builder on the case can press, and only once they can actually see the access. Pressing it logs the access-granted timestamp to both the ticket and case file and marks the build as started. There is no separate "start build" command.
+Builders can't be given an admin role in a server they haven't joined, so the bot asks the client for an invite to their server as soon as the contract is accepted. The client presses **Add my server invite** and pastes the link into a short form. The bot only accepts a real Discord invite, tidies it to the `discord.gg/...` form, and records it in its own **Client Server** field on the case embed, in both the ticket and the case file post. Until it arrives, that field reads as waiting on the client.
 
-### Step 6 - Build Finish & Rating
+The Lead is pinged when the invite lands and joins the server with it. If the link expires, the client presses the same button again with a new one, and the field updates.
+
+### Step 6 - Server Access & Build Start
+
+After the builders have joined, the client grants BSCH's assigned Builder(s) admin access directly in their own server. Because the bot has no visibility into permission changes on a server it isn't managing, this step is confirmed manually. `/admingrant` won't go ahead without the invite: if the client hasn't sent one, it asks them again instead. Once it has the invite, the Builder runs `/admingrant`, and the bot posts instructions for the client: make a role, give it **Administrator**, drag it to the **very top** of their role list, and hand it to the builders named on the case. The message carries a **Finished** button that only a Builder on the case can press, and only once they can actually see the access. Pressing it logs the access-granted timestamp to both the ticket and case file and marks the build as started. There is no separate "start build" command.
+
+### Step 7 - Build Finish & Rating
 
 When the build is complete, the Lead runs `/buildfinished`. This immediately pings the client with a Yes/No button asking "Would you like to leave a rating and/or review?"
 
-- **No:** nothing further happens and the flow proceeds to Step 7.
+- **No:** nothing further happens and the flow proceeds to Step 8.
 - **Yes:** the bot presents a form with two fields: a rating entered as any number 1-10, and a free-text review. Whatever the client submits is logged to both the ticket and the case file post once received.
 
-### Step 7 - Paperwork
+### Step 8 - Paperwork
 
 After the client has responded, the Builder files `/paperwork` - a slash command, not a modal, since Discord modals cannot accept file attachments. Server name, screenshots, and any other closing details are supplied as command parameters directly, with images attached the same way any file is attached to a slash command. This step is independent of the roster; it does not re-derive or auto-fill builder credit from roster data.
 
 `/paperwork` also carries a **showcase** option. Ticking it posts the same photos to the showcase channel, credited to everyone on the case roster. Left alone, the photos stay in the ticket and the case file.
 
-### Step 8 - Template Bank Consideration
+### Step 9 - Template Bank Consideration
 
 Once paperwork is filed, the bot pings the Lead asking whether this build is worth preserving in BSCH's reusable template bank. The client's side of this was already answered when they accepted the contract, so the bot does not ask them again:
 
@@ -137,9 +144,9 @@ Once paperwork is filed, the bot pings the Lead asking whether this build is wor
 - **Lead says yes but the client said no on the contract:** nothing is copied, and the ticket says so.
 - **Lead says no:** nothing is copied.
 
-Nothing else in the flow depends on this outcome. There is no separate command to confirm the copy was completed - `/copyphasedone` (Step 9) covers both closing out this decision and confirming the copy is done, whichever applies.
+Nothing else in the flow depends on this outcome. There is no separate command to confirm the copy was completed - `/copyphasedone` (Step 10) covers both closing out this decision and confirming the copy is done, whichever applies.
 
-### Step 9 - Close
+### Step 10 - Close
 
 Regardless of which way the template-bank decision went, the Lead (or the Builder who performed the copy) runs `/copyphasedone` to close out this stage. The bot then sends one final embed to the client: a reminder to revoke BSCH's admin access from their server, a pointer to the help desk, the donation link, and a final question - is it clear to close the ticket?
 
@@ -158,7 +165,7 @@ Nothing about this service requires payment at any stage; the donation link is o
 | `!inject [text]` | Builder on the case | Appends a new numbered Extra Info field to the case record. |
 | `!sub [number] [text]` | Builder on the case | Rewords that Extra Info entry. With no text, removes it (struck through, number kept). |
 | `/contract` | Lead | Sends the hiring contract with two Accept buttons (reuse allowed or not) and Decline; snapshots the text and version into the case. |
-| `/admingrant` | Builder on the case | Posts the access instructions for the client, with a Finished button that confirms access and starts the build. |
+| `/admingrant` | Builder on the case | Posts the access instructions for the client, with a Finished button that confirms access and starts the build. Waits for the client's server invite first, and asks for it again if it is missing. |
 | `/buildfinished` | Lead | Marks the build complete; triggers the client rating/review ping. |
 | `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters, and optionally posts the photos to the showcase channel. |
 | `/copyphasedone` | Lead, or the Builder who performed the copy | Closes out the template-bank decision (and confirms the copy is done, if applicable); triggers the final close-out embed. |
@@ -373,7 +380,7 @@ Staff are expected to check their claimed cases and open tickets regularly enoug
 
 ### Professionalism in Client Servers
 
-Once admin access is granted (Section 1, Step 5), a Builder is operating inside someone else's server with real permissions. Builders must:
+Once admin access is granted (Section 1, Step 6), a Builder is operating inside someone else's server with real permissions. Builders must:
 
 - Stay within the scope defined by the case's intake info and Extra Info fields - anything outside that scope goes back to the client for confirmation before being built.
 - Never use granted access for anything unrelated to the build (no browsing unrelated channels, no acting on the client's server outside the agreed work).

@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const store = require("../hire/store");
-const { isCaseBuilder } = require("../handlers/hiringhandler");
+const { isCaseBuilder, promptInvite } = require("../handlers/hiringhandler");
 
 // The Lead runs this to ask the client for access. The bot spells out exactly
 // what the client has to do, and the Lead presses the button once they can see
@@ -21,6 +21,16 @@ module.exports = {
         }
         if (record.adminGrantedAt) {
             return interaction.reply({ content: "❌ Server access is already logged as granted.", flags: 64 });
+        }
+
+        // Builders can't be handed a role in a server they haven't joined, so
+        // the invite comes first. Ask again rather than carry on without it.
+        if (!record.serverInvite) {
+            await promptInvite(interaction.channel, record);
+            return interaction.reply({
+                content: "⏳ The client hasn't sent their server invite yet, so I've asked them again above. Run `/admingrant` once you've joined their server.",
+                flags: 64,
+            });
         }
 
         const builders = (record.roster && record.roster.length ? record.roster : [interaction.user.id])
