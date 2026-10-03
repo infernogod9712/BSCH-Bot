@@ -22,5 +22,16 @@
       "who": "Client"
     }
   ],
-  "discordApply": "https://discord.gg/CzfYAquUXE"
+  "discordApply": "https://discord.gg/CzfYAquUXE",
+  "_botsComment": "Bot names hidden from the live panel. Discord does not mark bots in its widget feed, so add new bots here.",
+  "widgetBots": [
+    "BSCH Bot",
+    "DISBOARD",
+    "Discadia",
+    "Honeypot",
+    "Sapphire",
+    "TTS Bot",
+    "Vortigern OS",
+    "Wick"
+  ]
 }

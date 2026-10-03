@@ -97,11 +97,14 @@ function fillTokens(html) {
   return html
     .replace('href="/base.css"', `href="/base.css?v=${stamp('base.css')}"`)
     .replace('src="/flow-chart.js"', `src="/flow-chart.js?v=${stamp('flow-chart.js')}"`)
+    .replace('src="/motion.js"', `src="/motion.js?v=${stamp('motion.js')}"`)
+    .replace('src="/live.js"', `src="/live.js?v=${stamp('live.js')}"`)
     .replace(/__DISCORD_APPLY__/g, stats.discordApply || stats.discord)
     .replace(/__DISCORD__/g, stats.discord)
     .replace(/__SERVERS__/g, stats.serversBuilt)
     .replace(/__CLAIM__/g, stats.claimHours)
     .replace(/__RATING__/g, stats.rating)
+    .replace(/__BOTS__/g, (stats.widgetBots || []).join('|').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'))
     .replace(/__REVIEWS__/g, reviews);
 }
 
