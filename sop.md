@@ -155,6 +155,13 @@ Regardless of which way the template-bank decision went, the Lead (or the Builde
 
 Nothing about this service requires payment at any stage; the donation link is offered once, here, and is entirely optional.
 
+### Builder Resources
+
+Places to copy decorative characters from when naming channels, categories and roles. Click a character on the page to copy it.
+
+- **Brackets:** https://emojidb.org/brackets-emojis
+- **Symbols:** https://emojidb.org/symbols-emojis
+
 ### Command Reference - Hiring
 
 | Command | Run by | Effect |
