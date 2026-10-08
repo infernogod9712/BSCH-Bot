@@ -1,5 +1,12 @@
 [
   {
+    "id": "2026-10-08-1",
+    "header": "Bot Update",
+    "removals": [
+      "The bot no longer pings clients in their ticket when they go quiet during a build"
+    ]
+  },
+  {
     "id": "2026-10-03-2",
     "header": "Bot Update",
     "additions": [

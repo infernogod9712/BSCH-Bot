@@ -63,7 +63,6 @@ const SETTINGS = {
   'roles.ownership': { type: 'roleList', label: 'Ownership roles (d! owner commands)' },
   'timers.claimPingHours': { type: 'number', label: 'Hours before unclaimed cases ping Builders' },
   'timers.claimAutoCloseHours': { type: 'number', label: 'Hours before unclaimed cases close' },
-  'timers.clientInactivityHours': { type: 'number', label: 'Hours before an inactive client is pinged' },
   'timers.applicationDenyCooldownDays': { type: 'number', label: 'Days before a denied applicant can reapply' },
   'timers.drillFailCooldownDays': { type: 'number', label: 'Days before a failed trainee can request a drill' },
   'timers.drillBuildDeadlineDays': { type: 'number', label: 'Days a builder trainee has to submit their drill build' },

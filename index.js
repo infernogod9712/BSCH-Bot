@@ -119,15 +119,6 @@ client.on('messageCreate', async (message) => {
     if (handled) return;
   }
 
-  // Track the client's activity in their hire ticket (for inactivity pings)
-  const record = store.getCaseByChannel(message.channel.id);
-  if (record && message.author.id === record.clientId) {
-    store.updateCase(record.ticketId, {
-      lastClientMessageAt: new Date().toISOString(),
-      inactivityPinged: false,
-    });
-  }
-
   // d!… — owner-only commands for running the bot itself
   if (await devHandler.handleMessage(message, client, config).catch(() => false)) return;
 
@@ -163,7 +154,7 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-// ---- Timer sweep: claim 24h/48h + client inactivity (Section 1, Step 2) ----
+// ---- Timer sweep: claim 24h/48h (Section 1, Step 2) ----
 const HOUR_MS = 3600 * 1000;
 
 async function sweepCases() {
@@ -182,7 +173,7 @@ async function sweepCases() {
     await hiringHandler.sweepCheckIns(client).catch(e => console.error('sweepCheckIns error:', e));
 
     for (const record of store.getAllCases()) {
-      // Drill cases run on the Head's schedule, not the claim/inactivity timers
+      // Drill cases run on the Head's schedule, not the claim timers
       if (record.drill || record.status === 'closed' || !record.channelId) continue;
 
       // Unclaimed claim timers
@@ -213,23 +204,6 @@ async function sweepCases() {
           }
           store.updateCase(record.ticketId, { claimPinged: true });
           continue;
-        }
-      }
-
-      // Client inactivity during an active build
-      if (record.status === 'build-started') {
-        const last = record.lastClientMessageAt
-          ? new Date(record.lastClientMessageAt).getTime()
-          : new Date(record.createdAt).getTime();
-        if (now - last >= (config.timers.clientInactivityHours || 24) * HOUR_MS && !record.inactivityPinged) {
-          const ch = await guild.channels.fetch(record.channelId).catch(() => null);
-          if (ch) {
-            await ch.send(
-              `<@${record.clientId}> just checking in — are you still available to continue your build? ` +
-              `Let us know so we can keep things moving. 🙂`
-            ).catch(() => {});
-          }
-          store.updateCase(record.ticketId, { inactivityPinged: true });
         }
       }
     }

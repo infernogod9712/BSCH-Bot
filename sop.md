@@ -190,7 +190,7 @@ Places to copy decorative characters from when naming channels, categories and r
 ### Exceptions & Edge Cases - Hiring
 
 - **Builder no-show:** if a Builder on the roster stops responding mid-build, the Lead removes them from the roster with `/removefromcase`.
-- **Client disappears mid-build:** if the client goes quiet during an active build, the bot pings them after a set inactivity window. If still no response, the case is flagged inactive and archived.
+- **Client disappears mid-build:** the bot does not ping quiet clients on its own. If the client goes quiet during an active build, the Lead checks in with them in the ticket. If there's still no response, close the case as inactive.
 - **Client cancels mid-build:** if the client actively cancels rather than disappearing, the ticket closes immediately with no paperwork or rating step - distinct from a disappearance, logged as a cancellation, not a timeout.
 - **Disputes:** any disagreement between the Lead and a helper Builder on the same case that can't be resolved between them is escalated to Senior Staff, who make the final call.
 - **Senior Staff override:** Senior Staff may force-claim or reassign a stuck case at any time, independent of the 24h/48h claim timers.
@@ -355,7 +355,7 @@ A Head who picks up the request runs `/drillstart [department] [trainee] [client
 
 The scenario then plays out inside that ticket exactly as a real case or moderation situation would, with the named Client acting their part and Helpers assisting as needed, while the Head evaluates the Trainee's handling of it in real time.
 
-A builder drill runs as a practice hire case. The role-play Client fills in the same hire form a real client uses, and the bot posts the intake embed with a Claim button. From there every hire command works in the drill ticket, and the Trainee counts as a Builder for that case only. Drill cases are numbered D1, D2 and so on, get no post in hire-bsch-case-logs, skip the claim and inactivity timers, and stay out of client build history. When the practice case closes, the ticket stays open so the Head can grade it with `/drillend`.
+A builder drill runs as a practice hire case. The role-play Client fills in the same hire form a real client uses, and the bot posts the intake embed with a Claim button. From there every hire command works in the drill ticket, and the Trainee counts as a Builder for that case only. Drill cases are numbered D1, D2 and so on, get no post in hire-bsch-case-logs, skip the claim timers, and stay out of client build history. When the practice case closes, the ticket stays open so the Head can grade it with `/drillend`.
 
 For builders, the trainee must build a server based on the fake client’s task, with a deadline of 5 days. The trainee will then run `/drillsubmitbuild` with an invite link to the server, and the head looks at the server and grades it. If the trainee does not hand in a build within 5 days of `/drillstart`, the bot automatically ends the drill as a fail and applies the normal fail cooldown.
 
