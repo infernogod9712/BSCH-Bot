@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const { readJson, writeJson } = require('../data-file');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = process.env.BSCH_DATA_DIR || path.join(__dirname, '..', 'data');
 const CASES_PATH = path.join(DATA_DIR, 'cases.json');
 
 // Read the whole store. If the file doesn't exist yet, start fresh.

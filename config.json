@@ -1,5 +1,6 @@
 {
   "guildId": "1497625871370944614",
+  "drillGuildId": "1553141233407234139",
   "channels": {
     "hireUs": "1506727116849414174",
     "helpDesk": "1533230811153830008",
@@ -19,7 +20,8 @@
     "statusPanelChannel": "1553120438039609354",
     "sopChannel": "1533401275146702919",
     "transparencyChannel": "1555958232193835109",
-    "checkInChannel": "1556017268436111420"
+    "checkInChannel": "1556017268436111420",
+    "botLogChannel": "1558895358455848960"
   },
   "categories": {
     "hireTickets": "1553122748048347166",

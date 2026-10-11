@@ -19,6 +19,7 @@ const referrals = require("./referralhandler");
 const archive = require("./archive");
 const { renderEntry } = require("./extrainfohandler");
 const sitereviews = require("./sitereviews");
+const { guildIdFromInvite } = require("./serverleave");
 
 module.exports = {
     async handle(interaction, client, config) {
@@ -689,9 +690,14 @@ async function recordInvite(interaction, record, rawLink, retryHint) {
     }
 
     const replacing = Boolean(record.serverInvite);
+    // Which server the invite is for, so the bot knows to leave it once the
+    // case is over (see serverleave.js)
+    const clientGuildId = await guildIdFromInvite(interaction.client, invite);
     const updated = store.updateCase(record.ticketId, {
         serverInvite: invite,
         serverInviteAt: new Date().toISOString(),
+        clientGuildId,
+        inviteLookupFailed: clientGuildId ? null : invite,
     });
     await updateCaseViews(interaction.guild, updated);
 

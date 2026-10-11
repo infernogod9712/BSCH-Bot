@@ -22,6 +22,12 @@ const { sweepDrills } = require('./onboarding/drills');
 const { sweepArchive } = require('./handlers/archive');
 const { sweepSuspensions } = require('./staff/actions');
 const { startAutoSync } = require('./git-sync');
+const { botLog, logInteraction } = require('./handlers/botlog');
+const { sweepServers, homeServers } = require('./handlers/serverleave');
+
+// The only commands that work in a client's server. Everything else is for
+// the main BSCH server and the drill server.
+const CLIENT_SERVER_COMMANDS = new Set(['copyserver', 'pasteserver', 'rolespurge', 'channelspurge']);
 
 // ---- Create the bot ----
 const client = new Client({
@@ -59,11 +65,18 @@ client.on('interactionCreate', async (interaction) => {
     return;
   }
 
+  // Every press, form and command goes in the bot log
+  logInteraction(interaction, client, config);
+
   try {
     // Slash command → run the matching command file
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
       if (!command) return;
+      if (interaction.guildId && !homeServers(config).has(interaction.guildId)
+          && !CLIENT_SERVER_COMMANDS.has(interaction.commandName)) {
+        return interaction.reply({ content: '❌ This command only works in the BSCH server.', flags: 64 });
+      }
       await command.execute(interaction, client, config);
 
     // Button click, dropdown pick or modal submit → route by customId
@@ -119,6 +132,17 @@ client.on('messageCreate', async (message) => {
     if (handled) return;
   }
 
+  // ! and d! commands go in the bot log too
+  if (/^(d!\w|!(inject|sub|buildlogs)\b)/i.test(message.content.trim())) {
+    botLog(client, config, {
+      kind: 'command',
+      title: 'Command used',
+      description: `\`${message.content.trim().slice(0, 300)}\` in <#${message.channel.id}>`,
+      user: message.author,
+      guild: message.guild,
+    });
+  }
+
   // d!… — owner-only commands for running the bot itself
   if (await devHandler.handleMessage(message, client, config).catch(() => false)) return;
 
@@ -171,6 +195,8 @@ async function sweepCases() {
     await sweepSuspensions(guild, config).catch(e => console.error('sweepSuspensions error:', e));
     // 30-day check-in DMs that are due
     await hiringHandler.sweepCheckIns(client).catch(e => console.error('sweepCheckIns error:', e));
+    // Leave clients' servers once their builds are over
+    await sweepServers(client, config).catch(e => console.error('sweepServers error:', e));
 
     for (const record of store.getAllCases()) {
       // Drill cases run on the Head's schedule, not the claim timers
@@ -190,6 +216,7 @@ async function sweepCases() {
             ).catch(() => {});
           }
           await hiringHandler.closeCaseChannel(guild, record, null, 'unclaimed-timeout', config);
+          botLog(client, config, { title: `Closed unclaimed case #${record.ticketId}`, description: `Nobody claimed it in ${config.timers.claimAutoCloseHours || 48} hours.` });
           continue;
         }
 
@@ -203,6 +230,7 @@ async function sweepCases() {
             ).catch(() => {});
           }
           store.updateCase(record.ticketId, { claimPinged: true });
+          botLog(client, config, { title: `Pinged Builders about case #${record.ticketId}`, description: `Unclaimed for ${config.timers.claimPingHours || 24} hours.` });
           continue;
         }
       }
@@ -216,7 +244,11 @@ async function sweepCases() {
 // Guild commands update instantly, so every server the bot is in gets the
 // current command list on startup, and new servers get it when the bot joins.
 async function registerCommands(guild) {
-  const body = [...client.commands.values()].map(c => c.data.toJSON());
+  // Clients' servers only get the commands meant for them
+  const home = homeServers(config).has(guild.id);
+  const body = [...client.commands.values()]
+    .filter(c => home || CLIENT_SERVER_COMMANDS.has(c.data.name))
+    .map(c => c.data.toJSON());
   try {
     const rest = new REST().setToken(process.env.DISCORD_TOKEN);
     await rest.put(Routes.applicationGuildCommands(client.user.id, guild.id), { body });
@@ -226,7 +258,17 @@ async function registerCommands(guild) {
   }
 }
 
-client.on('guildCreate', registerCommands);
+client.on('guildCreate', async (guild) => {
+  await registerCommands(guild);
+  botLog(client, config, {
+    kind: 'auto',
+    title: 'Joined a server',
+    description: homeServers(config).has(guild.id)
+      ? 'This is a BSCH home server, so I will stay.'
+      : "I'll leave 24 hours after its build is finished (or after 24 hours if no case links to it).",
+    fields: [{ name: 'Server', value: `${guild.name} (${guild.id})` }],
+  });
+});
 
 // This runs once, when the bot successfully logs in
 client.once('clientReady', async () => {

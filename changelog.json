@@ -1,5 +1,18 @@
 [
   {
+    "id": "2026-10-11-1",
+    "header": "Bot Update",
+    "additions": [
+      "A bot log channel: every command, button and automatic action is written down there",
+      "The bot leaves a client's server 24 hours after their case closes",
+      " It never leaves the BSCH server or the drill server"
+    ],
+    "changes": [
+      "Server pastes are logged in the bot log instead of the template storage forum",
+      "Only /copyserver, /pasteserver, /rolespurge and /channelspurge work in clients' servers; everything else is BSCH and drill server only"
+    ]
+  },
+  {
     "id": "2026-10-08-1",
     "header": "Bot Update",
     "removals": [

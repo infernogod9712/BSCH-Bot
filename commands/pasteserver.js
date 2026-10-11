@@ -3,13 +3,13 @@ const {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    ChannelType,
     PermissionFlagsBits,
 } = require("discord.js");
 const templates = require("../hire/templates");
 const { applyTemplate } = require("../hire/serverclone");
 // Roles are checked in the main BSCH server, since this runs in a client's server
 const { isMainServerBuilder } = require("../handlers/hiringhandler");
+const { botLog } = require("../handlers/botlog");
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -81,31 +81,22 @@ module.exports = {
 
         const result = await applyTemplate(interaction.guild, template);
 
-        // Keep a log of the paste in the template-log forum.
-        const logEmbed = {
-            title: `📥 Template Pasted — ${template.name}`,
-            color: 0x2ecc71,
+        // The paste goes in the bot log, not the template storage forum
+        await botLog(client, config, {
+            kind: "done",
+            title: `Template pasted: ${template.name}`,
+            user: interaction.user,
+            guild: interaction.guild,
             fields: [
-                { name: "Into Server", value: interaction.guild.name, inline: true },
-                { name: "By", value: `<@${interaction.user.id}>`, inline: true },
-                { name: "Created", value: `${result.roles} roles, ${result.categories} categories, ${result.channels} channels`, inline: false },
+                { name: "Created", value: `${result.roles} roles, ${result.categories} categories, ${result.channels} channels` },
                 ...(result.errors.length ? [{ name: `Skipped (${result.errors.length})`, value: result.errors.slice(0, 8).join("\n").slice(0, 1000) }] : []),
             ],
-            timestamp: new Date().toISOString(),
-        };
-        // Log in the main BSCH server, not the client's server we just built in
-        const main = client.guilds.cache.get(config.guildId);
-        const forum = main ? main.channels.cache.get(config.channels.templateLogForum) : null;
-        if (forum && forum.type === ChannelType.GuildForum) {
-            await forum.threads.create({ name: `Pasted: ${template.name}`, message: { embeds: [logEmbed] } }).catch(() => {});
-        } else if (forum) {
-            await forum.send({ embeds: [logEmbed] }).catch(() => {});
-        }
+        });
 
         return interaction.editReply({
             content:
                 `✅ Done! Created **${result.roles}** roles, **${result.categories}** categories, **${result.channels}** channels.` +
-                (result.errors.length ? `\n⚠️ ${result.errors.length} item(s) were skipped (usually permission limits). See the template-log forum for details.` : ""),
+                (result.errors.length ? `\n⚠️ ${result.errors.length} item(s) were skipped (usually permission limits). See the bot log for details.` : ""),
             embeds: [],
             components: [],
         });

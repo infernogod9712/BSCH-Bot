@@ -159,6 +159,12 @@ Regardless of which way the template-bank decision went, the Lead (or the Builde
 
 Nothing about this service requires payment at any stage; the donation link is offered once, here, and is entirely optional.
 
+**The bot leaves the client's server on its own.** It works out which server is the client's from the invite they sent, stays while their case is open, and leaves 24 hours after it closes. It also leaves any server it can't link to a case 24 hours after joining. The only servers it never leaves are the BSCH server and the drill server. Every leave is written in the bot log.
+
+**Where commands work.** In a client's server only `/copyserver`, `/pasteserver`, `/rolespurge` and `/channelspurge` show up. Every other command only works in the BSCH server and the drill server.
+
+**Bot log.** Every command, button press and form, plus everything the bot does on its own (leaving servers, closing unclaimed cases, pastes), is posted in the bot log channel.
+
 ### Builder Resources
 
 Places to copy decorative characters from when naming channels, categories and roles. Click a character on the page to copy it.
@@ -182,7 +188,9 @@ Places to copy decorative characters from when naming channels, categories and r
 | `/paperwork` | Builder on the case | Files closing details (server name, images, etc.) as command parameters, and optionally posts the photos to the showcase channel. |
 | `/copyphasedone` | Lead, or the Builder who performed the copy | Closes out the template-bank decision (and confirms the copy is done, if applicable); triggers the final close-out embed. |
 | `/copyserver [name] [description]` | Builder, run in the client's server | Saves that server's channels and roles into the template bank and logs it in the BSCH template-log forum. |
-| `/pasteserver [name]` | Builder, run in the server being built | Rebuilds a saved template's channels and roles in that server. |
+| `/pasteserver [name]` | Builder, run in the server being built | Rebuilds a saved template's channels and roles in that server. Logged in the bot log. |
+| `/rolespurge` | Server admin, run in the client's server | Deletes every role the bot can delete, after a confirm button. Blocked in the BSCH server. |
+| `/channelspurge` | Server admin, run in the client's server | Deletes every channel and category, after a confirm button. Blocked in the BSCH server. |
 | `/closecase [reason]` | Lead or Senior Staff | Closes a case early, archiving the ticket the same way a normal close does. |
 | `/delete` | Head Staff | Deletes the channel it is run in, for archived tickets that shouldn't wait out the archive timer. |
 | `!buildlogs @client` | Any staff | Pulls a client's full case history from hire-bsch-case-logs. Also runs automatically on new-case intake. |

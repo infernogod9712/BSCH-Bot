@@ -15,7 +15,8 @@ const OVERRIDES_PATH = path.join(process.env.BSCH_DATA_DIR || path.join(__dirnam
 
 // Settings that newer code expects. Added to the live config if missing.
 const DEFAULTS = {
-  channels: { drillRequestChannel: '', showcaseChannel: '', statusPanelChannel: '', sopChannel: '', transparencyChannel: '', checkInChannel: '' },
+  drillGuildId: '1553141233407234139',
+  channels: { drillRequestChannel: '', showcaseChannel: '', statusPanelChannel: '', sopChannel: '', transparencyChannel: '', checkInChannel: '', botLogChannel: '' },
   roles: { ownership: [] },
   categories: { generalTickets: '', bugTickets: '', buildHelpTickets: '', archive: '' },
   timers: { drillBuildDeadlineDays: 5, archiveDeleteDays: 7 },
@@ -42,6 +43,7 @@ const SETTINGS = {
   'channels.statusPanelChannel': { type: 'channel', label: 'Status panel channel' },
   'channels.sopChannel': { type: 'channel', label: 'Staff SOP channel' },
   'channels.transparencyChannel': { type: 'channel', label: 'Transparency channel' },
+  'channels.botLogChannel': { type: 'channel', label: 'Bot log channel (every bot action)' },
   'channels.checkInChannel': { type: 'channel', label: '30-day check-in reports channel (blank = case log thread)' },
   'categories.hireTickets': { type: 'category', label: 'Hire tickets category' },
   'categories.generalTickets': { type: 'category', label: 'General support category' },
