@@ -106,21 +106,40 @@ async function postNewChangelog(client, config) {
   const channel = await client.channels.fetch(channelId).catch(() => null);
   if (!channel) return 0;
 
-  const state = readJson(STATE_FILE, () => ({ posted: null }));
-  const ids = entries.map(e => e.id);
-  const start = state.posted && ids.includes(state.posted)
-    ? ids.indexOf(state.posted) + 1
-    : entries.length - 1;
+  // Entries can sit in the file in any order (newest is usually on top), so
+  // they're sorted by their date id and each one is remembered once posted
+  const ordered = [...entries].sort((a, b) => idKey(a.id) - idKey(b.id));
+  const state = readJson(STATE_FILE, () => ({}));
+  let done = new Set(state.postedIds || []);
+  if (!state.postedIds) {
+    if (state.posted) {
+      // Older state only kept the last id posted: everything up to it is done
+      const last = idKey(state.posted);
+      done = new Set(ordered.filter(e => idKey(e.id) <= last).map(e => e.id));
+    } else {
+      // Very first run: post only the newest, not the whole history
+      done = new Set(ordered.slice(0, -1).map(e => e.id));
+    }
+  }
 
   let posted = 0;
-  for (const entry of entries.slice(start)) {
+  for (const entry of ordered) {
+    if (done.has(entry.id)) continue;
     const sent = await postNotes(channel, { header: entry.header || 'Bot Update', ...entry })
       .then(() => true).catch(err => { console.error('[transparency] could not post:', err.message); return false; });
     if (!sent) break;                       // try again next start-up
-    writeJson(STATE_FILE, { posted: entry.id });
+    done.add(entry.id);
+    writeJson(STATE_FILE, { postedIds: [...done] });
     posted += 1;
   }
   return posted;
+}
+
+// "2026-10-03-2" -> a number that sorts by date, then by the number after it
+function idKey(id) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})-(\d+)$/.exec(String(id));
+  if (!m) return 0;
+  return Number(m[1] + m[2] + m[3]) * 1000 + Number(m[4]);
 }
 
 module.exports = { formatNotes, postNotes, postNewChangelog, readChangelog };
