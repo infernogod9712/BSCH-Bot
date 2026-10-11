@@ -76,12 +76,16 @@ function formatNotes({ header, additions, changes, removals }) {
   });
 }
 
-async function postNotes(channel, notes) {
-  const messages = formatNotes(notes);
-  for (const content of messages) {
-    await channel.send({ content, allowedMentions: { parse: [] } });
+async function sendNotes(channel, notes) {
+  const sent = [];
+  for (const content of formatNotes(notes)) {
+    sent.push(await channel.send({ content, allowedMentions: { parse: [] } }));
   }
-  return messages.length;
+  return sent;
+}
+
+async function postNotes(channel, notes) {
+  return (await sendNotes(channel, notes)).length;
 }
 
 // ── Automatic "Bot Update" posts ──────────────────────────────────────────────
@@ -122,17 +126,43 @@ async function postNewChangelog(client, config) {
     }
   }
 
-  let posted = 0;
-  for (const entry of ordered) {
-    if (done.has(entry.id)) continue;
-    const sent = await postNotes(channel, { header: entry.header || 'Bot Update', ...entry })
-      .then(() => true).catch(err => { console.error('[transparency] could not post:', err.message); return false; });
-    if (!sent) break;                       // try again next start-up
-    done.add(entry.id);
-    writeJson(STATE_FILE, { postedIds: [...done] });
-    posted += 1;
+  const fresh = ordered.filter(e => !done.has(e.id));
+  if (!fresh.length) return 0;
+
+  // Everything new goes in ONE post under one header, oldest lines first
+  const merged = { header: fresh[fresh.length - 1].header || 'Bot Update', additions: [], changes: [], removals: [] };
+  for (const entry of fresh) {
+    for (const key of ['additions', 'changes', 'removals']) merged[key].push(...toLines(entry[key]));
   }
-  return posted;
+
+  let sent;
+  try {
+    sent = await sendNotes(channel, merged);
+  } catch (err) {
+    console.error('[transparency] could not post:', err.message);
+    return 0;                               // try again next start-up
+  }
+
+  // The channel only keeps the latest bot update: remove the one before it.
+  // Only the bot's own auto posts are tracked, so /transparency posts stay.
+  // State saved before this was tracked doesn't know the last post, so it
+  // adopts the bot's newest "Bot Update" message from before this one.
+  let previous = state.lastMessageIds;
+  if (!previous) {
+    const recent = await channel.messages.fetch({ limit: 25 }).catch(() => null);
+    const last = recent && [...recent.values()]
+      .filter(m => m.author.id === client.user.id && !sent.some(s => s.id === m.id)
+        && m.content.startsWith('### Bot Update'))
+      .sort((a, b) => b.createdTimestamp - a.createdTimestamp)[0];
+    previous = last ? [last.id] : [];
+  }
+  for (const id of previous) {
+    await channel.messages.delete(id).catch(() => {});
+  }
+
+  for (const entry of fresh) done.add(entry.id);
+  writeJson(STATE_FILE, { postedIds: [...done], lastMessageIds: sent.map(m => m.id) });
+  return fresh.length;
 }
 
 // "2026-10-03-2" -> a number that sorts by date, then by the number after it
@@ -142,4 +172,4 @@ function idKey(id) {
   return Number(m[1] + m[2] + m[3]) * 1000 + Number(m[4]);
 }
 
-module.exports = { formatNotes, postNotes, postNewChangelog, readChangelog };
+module.exports = { formatNotes, postNotes, sendNotes, postNewChangelog, readChangelog };
